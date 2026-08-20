@@ -18,23 +18,113 @@ library(abind)
 
 
 monthly_to_yearly_nc <- function(
-    base_dir,
-    model, # ESM
-    scenario, #SSP
-    variable, #tos.o2, etc
-    ensemble = "r1i1p1f1",
-    resolution = "30arcmin",
-    period = "2101_2300",
-    units_override = NULL
+    base_dir, model, scenario, variable,
+    ensemble = "r1i1p1f1", resolution = "30arcmin",
+    period = "2101_2300", units_override = NULL,
+    surface_only = TRUE  # NEW: Extract surface level
 ) {
   
-  # ---- Build file paths ----
+  input_file <- file.path(base_dir, model, scenario,
+    sprintf("%s_%s_%s_%s_%s_global_monthly_%s.nc",
+            model, ensemble, scenario, variable, resolution, period))
+  
+  output_dir <- file.path(base_dir, model, scenario, "yearly")
+  dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
+  
+  output_file <- file.path(output_dir,
+    sprintf("%s_%s_%s_%s_%s_global_yearly_%s.nc",
+            model, ensemble, scenario, variable, resolution, period))
+  
+  if (!file.exists(input_file)) stop("Input file not found:\n", input_file)
+  
+  # ---- Fix variable names for reading ----
+  var_nc <- variable
+  if(variable %in% c("o2-bot", "ph-bot", "so-bot")) var_nc <- sub("-bot$", "", variable)
+  
+  nc <- nc_open(input_file)
+  lon  <- ncvar_get(nc, "lon")
+  lat  <- ncvar_get(nc, "lat")
+  time <- ncvar_get(nc, "time")
+  
+  origin_year <- as.integer(sub(".*since ([0-9]{4}).*", "\\1", nc$dim$time$units))
+  years  <- origin_year + floor(time / 12)
+  uyears <- sort(unique(years))
+  
+  var_units <- nc$var[[var_nc]]$units
+  if (!is.null(units_override)) var_units <- units_override
+  
+  # ---- NEW: Check dimensions and get surface ----
+  var_dims <- length(nc$var[[var_nc]]$dim)
+  has_levels <- var_dims == 4 && "olevel" %in% names(nc$dim)
+  
+  if (surface_only && has_levels) {
+    cat("4D variable detected. Extracting surface level (olevel=1)...\n")
+    # Read ONLY surface level: [lon, lat, 1, time]
+    surface_array <- ncvar_get(nc, var_nc, 
+                               start = c(1, 1, 1, 1), 
+                               count = c(-1, -1, 1, -1))
+  } else {
+    # Original 3D case
+    surface_array <- ncvar_get(nc, var_nc)
+  }
+  
+  nc_close(nc)
+  
+  # ---- Compute yearly means (now always 3D: lon x lat x time) ----
+  yearly_means <- array(NA_real_, dim = c(length(lon), length(lat), length(uyears)))
+  
+  for (i in seq_along(uyears)) {
+    idx <- which(years == uyears[i])
+    yearly_means[,,i] <- apply(surface_array[,,idx], c(1,2), mean, na.rm = TRUE)
+  }
+  
+  # ---- Create output NetCDF ----
+  lon_dim  <- ncdim_def("lon",  "degrees_east",  lon)
+  lat_dim  <- ncdim_def("lat",  "degrees_north", lat)
+  year_dim <- ncdim_def("year", "year", uyears)
+  
+  var_def <- ncvar_def(
+    name = variable,  # Use original name for output
+    units = var_units,
+    dim = list(lon_dim, lat_dim, year_dim),
+    missval = -999, prec = "float"
+  )
+  
+  nc_out <- nc_create(output_file, vars = list(var_def))
+  ncvar_put(nc_out, var_def, yearly_means)
+  nc_close(nc_out)
+  
+  message("Yearly surface NetCDF written:\n", output_file)
+  invisible(output_file)
+}
+
+
+
+monthly_to_yearly_nc(
+  base_dir = "/Volumes/Enterprise/Data/FishMip/fishmip_2300",
+  model    = "ipsl-cm6a-lr",
+  scenario = "historical",
+  variable = "uo",
+  ensemble = "r1i1p1f1",
+  resolution = "30arcmin",
+  period = "1850_2014"
+)
+
+
+```
+```{r}
+
+
+monthly_to_yearly_nc <- function(
+    base_dir, model, scenario, variable,
+    ensemble = "r1i1p1f1", resolution = "30arcmin",
+    period = "2101_2300", units_override = NULL
+) {
+  
   input_file <- file.path(
     base_dir, model, scenario,
-    sprintf(
-      "%s_%s_%s_%s_%s_global_monthly_%s.nc",
-      model, ensemble, scenario, variable, resolution, period
-    )
+    sprintf("%s_%s_%s_%s_%s_global_monthly_%s.nc",
+            model, ensemble, scenario, variable, resolution, period)
   )
   
   output_dir <- file.path(base_dir, model, scenario, "yearly")
@@ -42,102 +132,105 @@ monthly_to_yearly_nc <- function(
   
   output_file <- file.path(
     output_dir,
-    sprintf(
-      "%s_%s_%s_%s_%s_global_yearly_%s.nc",
-      model, ensemble, scenario, variable, resolution, period
-    )
+    sprintf("%s_%s_%s_%s_%s_global_yearly_%s.nc",
+            model, ensemble, scenario, variable, resolution, period)
   )
   
-  if (!file.exists(input_file)) {
-    stop("Input file not found:\n", input_file)
-  }
+  if (!file.exists(input_file)) stop("Input file not found:\n", input_file)
   
-  # ---- Open input ----
-  
-  ## Fix variable names
-  if(variable == "o2-bot"){
-    variable = "o2"
-  }
-  if(variable == "ph-bot"){
-    variable = "ph"
-  }
-  
-  if(variable == "so-bot"){
-    variable = "so"
-  }
-  
+  # ---- Get dimensions and metadata ----
   nc <- nc_open(input_file)
-  
   lon  <- ncvar_get(nc, "lon")
   lat  <- ncvar_get(nc, "lat")
   time <- ncvar_get(nc, "time")
   
-  # ---- Convert time to years (months since origin) ----
-  origin_year <- as.integer(sub(
-    ".*since ([0-9]{4}).*", "\\1", nc$dim$time$units
-  ))
-  
+  origin_year <- as.integer(sub(".*since ([0-9]{4}).*", "\\1", nc$dim$time$units))
   years  <- origin_year + floor(time / 12)
   uyears <- sort(unique(years))
   
-  # ---- Read variable ----
-  var_array <- ncvar_get(nc, variable)
+  # Get variable info
+  var_nc <- variable
+  if(variable %in% c("o2-bot", "ph-bot", "so-bot")) var_nc <- sub("-bot$", "", variable)
   
-  # ---- Compute yearly means ----
-  yearly_means <- array(
-    NA_real_,
-    dim = c(length(lon), length(lat), length(uyears))
-  )
+  var_info <- nc$var[[var_nc]]
+  var_units <- var_info$units
+  if (!is.null(units_override)) var_units <- units_override
   
-  for (i in seq_along(uyears)) {
-    idx <- which(years == uyears[i])
-    yearly_means[,,i] <- apply(
-      var_array[,,idx], c(1,2),
-      mean, na.rm = TRUE
-    )
-  }
-  
-  # ---- Get units from input if available ----
-  var_units <- nc$var[[variable]]$units
-  if (!is.null(units_override)) {
-    var_units <- units_override
-  }
+  # Get olevel (if it exists)
+  olevel <- if("olevel" %in% names(nc$dim)) ncvar_get(nc, "olevel") else NULL
   
   nc_close(nc)
   
   # ---- Create output NetCDF ----
   lon_dim  <- ncdim_def("lon",  "degrees_east",  lon)
   lat_dim  <- ncdim_def("lat",  "degrees_north", lat)
-  year_dim <- ncdim_def("year", "year",          uyears)
+  year_dim <- ncdim_def("year", "year", uyears, unlim = TRUE)
   
-  var_def <- ncvar_def(
-    name = variable,
-    units = var_units,
-    dim = list(lon_dim, lat_dim, year_dim),
-    missval = -999,
-    prec = "float"
-  )
+  if (!is.null(olevel)) {
+    olevel_dim <- ncdim_def("olevel", "m", olevel)  # No 'positive' argument
+    var_def <- ncvar_def(
+      name = variable, units = var_units,
+      dim = list(lon_dim, lat_dim, olevel_dim, year_dim),
+      missval = var_info$missval %||% -999, prec = "float"
+    )
+  } else {
+    var_def <- ncvar_def(
+      name = variable, units = var_units,
+      dim = list(lon_dim, lat_dim, year_dim),
+      missval = var_info$missval %||% -999, prec = "float"
+    )
+  }
   
   nc_out <- nc_create(output_file, vars = list(var_def))
-  ncvar_put(nc_out, var_def, yearly_means)
+  
+  # ---- Process year-by-year ----
+  nc <- nc_open(input_file)
+  
+  for (i in seq_along(uyears)) {
+    idx <- which(years == uyears[i])
+    n_months <- length(idx)
+    
+    if (!is.null(olevel)) {
+      # 4D: lon, lat, olevel, time
+      x <- ncvar_get(nc, var_nc, 
+                     start = c(1, 1, 1, min(idx)), 
+                     count = c(-1, -1, -1, n_months))
+      yearly_slice <- apply(x, c(1, 2, 3), mean, na.rm = TRUE)
+      
+      ncvar_put(nc_out, var_def, yearly_slice, 
+                start = c(1, 1, 1, i), count = c(-1, -1, -1, 1))
+    } else {
+      # 3D: lon, lat, time
+      x <- ncvar_get(nc, var_nc, 
+                     start = c(1, 1, min(idx)), 
+                     count = c(-1, -1, n_months))
+      yearly_slice <- apply(x, c(1, 2), mean, na.rm = TRUE)
+      
+      ncvar_put(nc_out, var_def, yearly_slice, 
+                start = c(1, 1, i), count = c(-1, -1, 1))
+    }
+    
+    cat(sprintf("Year %d/%d (%s): done\n", i, length(uyears), uyears[i]))
+  }
+  
+  nc_close(nc)
   nc_close(nc_out)
   
   message("Yearly NetCDF written:\n", output_file)
-  
   invisible(output_file)
 }
 
 
-# monthly_to_yearly_nc(
-#   base_dir = "/Volumes/Enterprise/Data/FishMip/fishmip_2300",
-#   model    = "ipsl-cm6a-lr",
-#   scenario = "ssp126",
-#   variable = "tos",
-#   ensemble = "r1i1p1f1",
-#   resolution = "30arcmin",
-#   period = "2101_2300"
-# )
 
+monthly_to_yearly_nc(
+  base_dir = "/Volumes/Enterprise/Data/FishMip/fishmip_2300",
+  model    = "ipsl-cm6a-lr",
+  scenario = "historical",
+  variable = "uo",
+  ensemble = "r1i1p1f1",
+  resolution = "30arcmin",
+  period = "1850_2014"
+)
 
 ```
 
@@ -149,7 +242,8 @@ variables <- c(
   # "tos",
   # "tob","o2-bot","o2-surf","ph-bot","ph-surf", "siconc",
   # "so-bot","so-surf"
-  "intpp","intppdiat"
+  # "intpp","intppdiat"
+  "uo","vo"
 )
 
 # lapply over variables
@@ -372,17 +466,17 @@ merge_early_late_nc <- function(path_early, path_late,path_future,out_dir) {
 ```{r}
 
 path_early <- list.files(
-  "/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/historical/yearly/",
+  "/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/historical/",
   pattern = ".nc", full.names = TRUE
 )
 
 path_late <- list.files(
-  "/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/ssp126/yearly/",
+  "/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/ssp126/",
   pattern = "_2015_2100.nc", full.names = TRUE
 )
 
 path_future <- list.files(
-  "/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/ssp126/yearly/",
+  "/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/ssp126/",
   pattern = "_2101_2300.nc", full.names = TRUE
 )
 
@@ -410,13 +504,17 @@ if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
 # merge_early_late_nc(path_early[i], path_late[i], path_future[i], out_dir)
 
 
+i = 1
+for (i in seq_along(path_early)) {
+  # for (i in 1:2) {
+    merge_early_late_nc(path_early[i], path_late[i], path_future[i], out_dir)
+  }
 
-# for (i in seq_along(path_early)) {
-for (i in 1:2) {
-  merge_early_late_nc(path_early[i], path_late[i], path_future[i], out_dir)
-}
-
-
+merge_early_late_nc(
+  path_early = path_early [1],
+  path_late = path_late[1],
+  path_future = path_future[1], out_dir
+)
 ```
 
 ## Test joint
@@ -424,9 +522,11 @@ for (i in 1:2) {
 ```{r}
 
 
+
 test_plot <-function(path_merged){
   
-  nc <- nc_open("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined/ipsl-cm6a-lr_r1i1p1f1_totalphy2_yearly_1850_2300_05x05.nc")
+  nc <- nc_open(path_merged)
+  
   if(nc$nvars == 2){
   var_name <- nc$var[[2]]$name
   }else{
@@ -434,7 +534,7 @@ test_plot <-function(path_merged){
   }
   
   pH   <- ncvar_get(nc, var_name)   # 720 x 360 x 300
-  time <- ncvar_get(nc, "year") # 300‑element vector
+  time <- ncvar_get(nc, "time_dim") # 300‑element vector
   
   nc_close(nc)
   
@@ -470,7 +570,7 @@ test_plot <-function(path_merged){
   
   ggsave(
     last_plot(),
-    filename = paste0("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined/0_plots/", var_name, "_global_mean_trend.jpg"),
+    filename = paste0("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined_figures/", var_name, "_global_mean_trend.jpg"),
          width = 8, height = 5)
   
 }
@@ -478,7 +578,7 @@ test_plot <-function(path_merged){
 path_list <- list.files("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined",pattern = ".nc",full.names = T)
 
 
-# test_plot(path_list[1])
+test_plot(path_list[1])
 
 lapply(path_list, test_plot)
 ```
@@ -534,4 +634,28 @@ nc_close(nc_out)
 test_plot("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined/ipsl-cm6a-lr_r1i1p1f1_totalphy2_yearly_1850_2300_05x05.nc")
   
 ```
+
+# Change variable name
+
+```{r}
+
+path_list <- list.files("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined",pattern = ".nc",full.names = T)
+
+
+nc_open(path_list[1])
+
+old = "u", new = "AdvectionU"
+old ="v", new = "AdvectionV"
+old = "so-surf", new ="Salinity_surf" 
+old = "so-btm", new = "Salinity_btm"
+old = "ph-surf",new ="htotal_surf" 
+old = "ph-btm",new ="htotal_btm" 
+old = "tob", new ="bot_temp"
+old = "tob", new ="SST"
+old = "o2-bot", new ="O2_btm" 
+old = "o2-surf", new ="O2_surf"
+old = "siconc",new ="IceExt" 
+
+```
+
 
