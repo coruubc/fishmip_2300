@@ -14,225 +14,98 @@ library(abind)
 
 # Create function to convert monthly to yearly NetCDF
 
+
 ```{r}
-
-
 monthly_to_yearly_nc <- function(
     base_dir, model, scenario, variable,
     ensemble = "r1i1p1f1", resolution = "30arcmin",
     period = "2101_2300", units_override = NULL,
-    surface_only = TRUE  # NEW: Extract surface level
+    surface_only = TRUE
 ) {
-  
+
   input_file <- file.path(base_dir, model, scenario,
     sprintf("%s_%s_%s_%s_%s_global_monthly_%s.nc",
             model, ensemble, scenario, variable, resolution, period))
-  
+
   output_dir <- file.path(base_dir, model, scenario, "yearly")
   dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
-  
+
   output_file <- file.path(output_dir,
     sprintf("%s_%s_%s_%s_%s_global_yearly_%s.nc",
             model, ensemble, scenario, variable, resolution, period))
-  
+
   if (!file.exists(input_file)) stop("Input file not found:\n", input_file)
-  
-  # ---- Fix variable names for reading ----
+
   var_nc <- variable
-  if(variable %in% c("o2-bot", "ph-bot", "so-bot")) var_nc <- sub("-bot$", "", variable)
-  
+  if (variable %in% c("o2-bot", "ph-bot", "so-bot")) var_nc <- sub("-bot$", "", variable)
+
   nc <- nc_open(input_file)
+  on.exit(nc_close(nc), add = TRUE)
+
   lon  <- ncvar_get(nc, "lon")
   lat  <- ncvar_get(nc, "lat")
   time <- ncvar_get(nc, "time")
-  
-  origin_year <- as.integer(sub(".*since ([0-9]{4}).*", "\\1", nc$dim$time$units))
-  years  <- origin_year + floor(time / 12)
+
+  time_units <- ncatt_get(nc, "time", "units")$value
+  origin_year <- as.integer(sub(".*since ([0-9]{4}).*", "\\1", time_units))
+  years <- origin_year + floor(time / 12)
   uyears <- sort(unique(years))
-  
+
   var_units <- nc$var[[var_nc]]$units
   if (!is.null(units_override)) var_units <- units_override
-  
-  # ---- NEW: Check dimensions and get surface ----
-  var_dims <- length(nc$var[[var_nc]]$dim)
-  has_levels <- var_dims == 4 && "olevel" %in% names(nc$dim)
-  
-  if (surface_only && has_levels) {
-    cat("4D variable detected. Extracting surface level (olevel=1)...\n")
-    # Read ONLY surface level: [lon, lat, 1, time]
-    surface_array <- ncvar_get(nc, var_nc, 
-                               start = c(1, 1, 1, 1), 
-                               count = c(-1, -1, 1, -1))
+
+  var_dims <- sapply(nc$var[[var_nc]]$dim, function(x) x$name)
+
+  if (surface_only && length(var_dims) == 4) {
+    lev_pos <- which(grepl("^olevel", var_dims))
+    time_pos <- which(var_dims == "time")
+
+    if (length(lev_pos) != 1 || length(time_pos) != 1) {
+      stop("Could not identify level/time dimensions for ", var_nc, ": ",
+           paste(var_dims, collapse = ", "))
+    }
+
+    start <- rep(1, length(var_dims))
+    count <- rep(-1, length(var_dims))
+    count[lev_pos] <- 1
+
+    surface_array <- ncvar_get(nc, var_nc, start = start, count = count)
+    surface_array <- drop(surface_array)
+
   } else {
-    # Original 3D case
     surface_array <- ncvar_get(nc, var_nc)
+    surface_array <- drop(surface_array)
   }
-  
-  nc_close(nc)
-  
-  # ---- Compute yearly means (now always 3D: lon x lat x time) ----
+
   yearly_means <- array(NA_real_, dim = c(length(lon), length(lat), length(uyears)))
-  
+
   for (i in seq_along(uyears)) {
     idx <- which(years == uyears[i])
     yearly_means[,,i] <- apply(surface_array[,,idx], c(1,2), mean, na.rm = TRUE)
   }
-  
-  # ---- Create output NetCDF ----
+
   lon_dim  <- ncdim_def("lon",  "degrees_east",  lon)
   lat_dim  <- ncdim_def("lat",  "degrees_north", lat)
   year_dim <- ncdim_def("year", "year", uyears)
-  
+
   var_def <- ncvar_def(
-    name = variable,  # Use original name for output
+    name = variable,
     units = var_units,
     dim = list(lon_dim, lat_dim, year_dim),
-    missval = -999, prec = "float"
+    missval = -999,
+    prec = "float"
   )
-  
+
   nc_out <- nc_create(output_file, vars = list(var_def))
   ncvar_put(nc_out, var_def, yearly_means)
   nc_close(nc_out)
-  
+
   message("Yearly surface NetCDF written:\n", output_file)
   invisible(output_file)
 }
 
-
-
-monthly_to_yearly_nc(
-  base_dir = "/Volumes/Enterprise/Data/FishMip/fishmip_2300",
-  model    = "ipsl-cm6a-lr",
-  scenario = "historical",
-  variable = "uo",
-  ensemble = "r1i1p1f1",
-  resolution = "30arcmin",
-  period = "1850_2014"
-)
-
-
 ```
-```{r}
 
-
-monthly_to_yearly_nc <- function(
-    base_dir, model, scenario, variable,
-    ensemble = "r1i1p1f1", resolution = "30arcmin",
-    period = "2101_2300", units_override = NULL
-) {
-  
-  input_file <- file.path(
-    base_dir, model, scenario,
-    sprintf("%s_%s_%s_%s_%s_global_monthly_%s.nc",
-            model, ensemble, scenario, variable, resolution, period)
-  )
-  
-  output_dir <- file.path(base_dir, model, scenario, "yearly")
-  dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
-  
-  output_file <- file.path(
-    output_dir,
-    sprintf("%s_%s_%s_%s_%s_global_yearly_%s.nc",
-            model, ensemble, scenario, variable, resolution, period)
-  )
-  
-  if (!file.exists(input_file)) stop("Input file not found:\n", input_file)
-  
-  # ---- Get dimensions and metadata ----
-  nc <- nc_open(input_file)
-  lon  <- ncvar_get(nc, "lon")
-  lat  <- ncvar_get(nc, "lat")
-  time <- ncvar_get(nc, "time")
-  
-  origin_year <- as.integer(sub(".*since ([0-9]{4}).*", "\\1", nc$dim$time$units))
-  years  <- origin_year + floor(time / 12)
-  uyears <- sort(unique(years))
-  
-  # Get variable info
-  var_nc <- variable
-  if(variable %in% c("o2-bot", "ph-bot", "so-bot")) var_nc <- sub("-bot$", "", variable)
-  
-  var_info <- nc$var[[var_nc]]
-  var_units <- var_info$units
-  if (!is.null(units_override)) var_units <- units_override
-  
-  # Get olevel (if it exists)
-  olevel <- if("olevel" %in% names(nc$dim)) ncvar_get(nc, "olevel") else NULL
-  
-  nc_close(nc)
-  
-  # ---- Create output NetCDF ----
-  lon_dim  <- ncdim_def("lon",  "degrees_east",  lon)
-  lat_dim  <- ncdim_def("lat",  "degrees_north", lat)
-  year_dim <- ncdim_def("year", "year", uyears, unlim = TRUE)
-  
-  if (!is.null(olevel)) {
-    olevel_dim <- ncdim_def("olevel", "m", olevel)  # No 'positive' argument
-    var_def <- ncvar_def(
-      name = variable, units = var_units,
-      dim = list(lon_dim, lat_dim, olevel_dim, year_dim),
-      missval = var_info$missval %||% -999, prec = "float"
-    )
-  } else {
-    var_def <- ncvar_def(
-      name = variable, units = var_units,
-      dim = list(lon_dim, lat_dim, year_dim),
-      missval = var_info$missval %||% -999, prec = "float"
-    )
-  }
-  
-  nc_out <- nc_create(output_file, vars = list(var_def))
-  
-  # ---- Process year-by-year ----
-  nc <- nc_open(input_file)
-  
-  for (i in seq_along(uyears)) {
-    idx <- which(years == uyears[i])
-    n_months <- length(idx)
-    
-    if (!is.null(olevel)) {
-      # 4D: lon, lat, olevel, time
-      x <- ncvar_get(nc, var_nc, 
-                     start = c(1, 1, 1, min(idx)), 
-                     count = c(-1, -1, -1, n_months))
-      yearly_slice <- apply(x, c(1, 2, 3), mean, na.rm = TRUE)
-      
-      ncvar_put(nc_out, var_def, yearly_slice, 
-                start = c(1, 1, 1, i), count = c(-1, -1, -1, 1))
-    } else {
-      # 3D: lon, lat, time
-      x <- ncvar_get(nc, var_nc, 
-                     start = c(1, 1, min(idx)), 
-                     count = c(-1, -1, n_months))
-      yearly_slice <- apply(x, c(1, 2), mean, na.rm = TRUE)
-      
-      ncvar_put(nc_out, var_def, yearly_slice, 
-                start = c(1, 1, i), count = c(-1, -1, 1))
-    }
-    
-    cat(sprintf("Year %d/%d (%s): done\n", i, length(uyears), uyears[i]))
-  }
-  
-  nc_close(nc)
-  nc_close(nc_out)
-  
-  message("Yearly NetCDF written:\n", output_file)
-  invisible(output_file)
-}
-
-
-
-monthly_to_yearly_nc(
-  base_dir = "/Volumes/Enterprise/Data/FishMip/fishmip_2300",
-  model    = "ipsl-cm6a-lr",
-  scenario = "historical",
-  variable = "uo",
-  ensemble = "r1i1p1f1",
-  resolution = "30arcmin",
-  period = "1850_2014"
-)
-
-```
 
 ## Run function for all variables
 
@@ -462,6 +335,196 @@ merge_early_late_nc <- function(path_early, path_late,path_future,out_dir) {
 ```
 
 
+```{r}
+merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
+  library(ncdf4)
+  library(abind)
+  
+  # --- Open files ---
+  nc_early  <- nc_open(path_early)
+  nc_late   <- nc_open(path_late)
+  nc_future <- nc_open(path_future)
+  
+  on.exit({
+    try(nc_close(nc_early), silent = TRUE)
+    try(nc_close(nc_late), silent = TRUE)
+    try(nc_close(nc_future), silent = TRUE)
+  }, add = TRUE)
+  
+  # --- Read coordinates ---
+  lon <- ncvar_get(nc_early, "lon")
+  lat <- ncvar_get(nc_early, "lat")
+  
+  # --- Identify main variable ---
+  exclude_vars <- c("lon", "lat", "time", "time_var", "olevel", "olevel_bnds", "bnds")
+  candidate_vars <- setdiff(names(nc_early$var), exclude_vars)
+  
+  if (length(candidate_vars) == 0) {
+    stop("No suitable data variable found in ", path_early)
+  }
+  
+  varname <- candidate_vars[1]
+  
+  # --- Inspect dimensions of target variable ---
+  var_dims <- sapply(nc_early$var[[varname]]$dim, function(x) x$name)
+  
+  # --- Helper function to read variable ---
+  read_target_var <- function(nc, varname) {
+    dims <- sapply(nc$var[[varname]]$dim, function(x) x$name)
+    
+    if (identical(dims, c("lon", "lat", "time")) ||
+        identical(dims, c("longitude", "latitude", "time"))) {
+      
+      data <- ncvar_get(nc, varname)
+      return(drop(data))
+    }
+    
+    if (identical(dims, c("lon", "lat", "olevel", "time")) ||
+        identical(dims, c("longitude", "latitude", "olevel", "time"))) {
+      
+      lon_n  <- nc$dim[[dims[1]]]$len
+      lat_n  <- nc$dim[[dims[2]]]$len
+      lev_n  <- nc$dim[[dims[3]]]$len
+      time_n <- nc$dim[[dims[4]]]$len
+      
+      if (lev_n < 1) stop("No olevel dimension found in ", varname)
+      
+      data <- ncvar_get(
+        nc, varname,
+        start = c(1, 1, 1, 1),
+        count = c(lon_n, lat_n, 1, time_n)
+      )
+      
+      return(drop(data))
+    }
+    
+    stop(
+      "Unsupported variable dimensions for ", varname, ": ",
+      paste(dims, collapse = ", ")
+    )
+  }
+  
+  # --- Read data ---
+  data_early  <- read_target_var(nc_early,  varname)
+  data_late   <- read_target_var(nc_late,   varname)
+  data_future <- read_target_var(nc_future, varname)
+  
+  # --- Confirm arrays are now lon x lat x time ---
+  if (length(dim(data_early)) != 3 ||
+      length(dim(data_late))  != 3 ||
+      length(dim(data_future)) != 3) {
+    stop("After reading, arrays are not 3D lon x lat x time.")
+  }
+  
+  # --- Merge along time dimension ---
+  data_full <- abind(data_early, data_late, data_future, along = 3)
+  
+  # --- Build time vector from actual inputs ---
+  time_early  <- if ("time_var" %in% names(nc_early$var)) ncvar_get(nc_early, "time_var") else ncvar_get(nc_early, "time")
+  time_late   <- if ("time_var" %in% names(nc_late$var))  ncvar_get(nc_late, "time_var")  else ncvar_get(nc_late, "time")
+  time_future <- if ("time_var" %in% names(nc_future$var)) ncvar_get(nc_future, "time_var") else ncvar_get(nc_future, "time")
+  
+  time_full <- c(time_early, time_late, time_future)
+  
+  if (length(time_full) != dim(data_full)[3]) {
+    stop(
+      "Time length mismatch: time vector = ", length(time_full),
+      ", data time dimension = ", dim(data_full)[3]
+    )
+  }
+  
+  # --- Time variable name for output ---
+  out_time_name <- "time"
+  
+  # --- Time units and calendar from source if available ---
+  time_units <- NA
+  time_calendar <- NA
+  
+  if ("time" %in% names(nc_early$dim)) {
+    time_units <- ncatt_get(nc_early, "time", "units")$value
+    time_calendar <- ncatt_get(nc_early, "time", "calendar")$value
+  } else if ("time_var" %in% names(nc_early$dim)) {
+    time_units <- ncatt_get(nc_early, "time_var", "units")$value
+    time_calendar <- ncatt_get(nc_early, "time_var", "calendar")$value
+  }
+  
+  if (is.null(time_units) || is.na(time_units)) time_units <- "unknown_time_units"
+  
+  # --- Define dimensions ---
+  dim_lon  <- ncdim_def("lon", "degrees_east", lon, create_dimvar = TRUE)
+  dim_lat  <- ncdim_def("lat", "degrees_north", lat, create_dimvar = TRUE)
+  dim_time <- ncdim_def("time", time_units, time_full, unlim = TRUE, create_dimvar = TRUE)
+  
+  # --- Define output variables ---
+  fillvalue <- ncatt_get(nc_early, varname, "_FillValue")$value
+  if (is.null(fillvalue) || is.na(fillvalue)) fillvalue <- -9999
+  
+  var_units <- ncatt_get(nc_early, varname, "units")$value
+  if (is.null(var_units) || is.na(var_units)) var_units <- "unknown"
+  
+  var_data <- ncvar_def(
+    varname,
+    var_units,
+    list(dim_lon, dim_lat, dim_time),
+    missval = fillvalue,
+    prec = "double"
+  )
+  
+  var_time <- ncvar_def(
+    out_time_name,
+    time_units,
+    list(dim_time),
+    missval = NULL,
+    prec = "double"
+  )
+  
+  # --- Output name ---
+  basename_early <- basename(path_early)
+  outname <- basename_early
+  
+  outname <- gsub("_historical_", "_", outname, fixed = TRUE)
+  outname <- gsub("_30arcmin_global_yearly_1850_2014.nc", "_yearly_1850_2300_05x05.nc", outname)
+  outname <- gsub("_30arcmin_global_monthly_1850_2014.nc", "_monthly_1850_2300_05x05.nc", outname)
+  outname <- paste0("merged_", outname)
+  
+  path_merged <- file.path(out_dir, outname)
+  
+  # --- Create output file ---
+  ncid <- nc_create(path_merged, list(var_time, var_data))
+  
+  ncvar_put(ncid, "lon", lon)
+  ncvar_put(ncid, "lat", lat)
+  ncvar_put(ncid, out_time_name, time_full)
+  ncvar_put(ncid, varname, data_full)
+  
+  # --- Copy variable attributes ---
+  var_atts <- ncatt_get(nc_early, varname)
+  for (nm in names(var_atts)) {
+    if (!nm %in% c("_FillValue")) {
+      ncatt_put(ncid, varname, nm, var_atts[[nm]])
+    }
+  }
+  
+  # --- Copy time calendar if available ---
+  if (!is.null(time_calendar) && !is.na(time_calendar)) {
+    ncatt_put(ncid, "time", "calendar", time_calendar)
+  }
+  
+  # --- Copy global attributes ---
+  gatts_early <- ncatt_get(nc_early, 0)
+  for (nm in names(gatts_early)) {
+    ncatt_put(ncid, 0, nm, gatts_early[[nm]])
+  }
+  
+  nc_close(ncid)
+  nc_close(nc_early)
+  nc_close(nc_late)
+  nc_close(nc_future)
+  
+  cat("Merged:", path_merged, "\n")
+}
+
+```
 
 ```{r}
 
