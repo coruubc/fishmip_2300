@@ -22,72 +22,87 @@ monthly_to_yearly_nc <- function(
     period = "2101_2300", units_override = NULL,
     surface_only = TRUE
 ) {
-
-  input_file <- file.path(base_dir, model, scenario,
-    sprintf("%s_%s_%s_%s_%s_global_monthly_%s.nc",
-            model, ensemble, scenario, variable, resolution, period))
-
+  
+  # Had to include this conditional because vo data for 2101_2300 was too big to fit on Enterprise 
+  input_base_dir <- if (period == "2101_2300" & variable == "vo") {
+    "/Volumes/fkt260629do/ipsl-cm6a-lr"
+  } else {
+    base_dir
+  }
+  
+  input_file <- file.path(
+    input_base_dir, model, scenario,
+    sprintf(
+      "%s_%s_%s_%s_%s_global_monthly_%s.nc",
+      model, ensemble, scenario, variable, resolution, period
+    )
+  )
+  # 
+  # input_file <- file.path(base_dir, model, scenario,
+  # sprintf("%s_%s_%s_%s_%s_global_monthly_%s.nc",
+  #         model, ensemble, scenario, variable, resolution, period))
+  
   output_dir <- file.path(base_dir, model, scenario, "yearly")
   dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
-
+  
   output_file <- file.path(output_dir,
-    sprintf("%s_%s_%s_%s_%s_global_yearly_%s.nc",
-            model, ensemble, scenario, variable, resolution, period))
-
+                           sprintf("%s_%s_%s_%s_%s_global_yearly_%s.nc",
+                                   model, ensemble, scenario, variable, resolution, period))
+  
   if (!file.exists(input_file)) stop("Input file not found:\n", input_file)
-
+  
   var_nc <- variable
   if (variable %in% c("o2-bot", "ph-bot", "so-bot")) var_nc <- sub("-bot$", "", variable)
-
+  
   nc <- nc_open(input_file)
   on.exit(nc_close(nc), add = TRUE)
-
+  
   lon  <- ncvar_get(nc, "lon")
   lat  <- ncvar_get(nc, "lat")
   time <- ncvar_get(nc, "time")
-
+  
   time_units <- ncatt_get(nc, "time", "units")$value
   origin_year <- as.integer(sub(".*since ([0-9]{4}).*", "\\1", time_units))
   years <- origin_year + floor(time / 12)
   uyears <- sort(unique(years))
-
+  
   var_units <- nc$var[[var_nc]]$units
   if (!is.null(units_override)) var_units <- units_override
-
+  
   var_dims <- sapply(nc$var[[var_nc]]$dim, function(x) x$name)
-
+  
   if (surface_only && length(var_dims) == 4) {
     lev_pos <- which(grepl("^olevel", var_dims))
     time_pos <- which(var_dims == "time")
-
+    
     if (length(lev_pos) != 1 || length(time_pos) != 1) {
       stop("Could not identify level/time dimensions for ", var_nc, ": ",
            paste(var_dims, collapse = ", "))
     }
-
+    
     start <- rep(1, length(var_dims))
     count <- rep(-1, length(var_dims))
     count[lev_pos] <- 1
-
+    
     surface_array <- ncvar_get(nc, var_nc, start = start, count = count)
     surface_array <- drop(surface_array)
-
+    
   } else {
     surface_array <- ncvar_get(nc, var_nc)
     surface_array <- drop(surface_array)
   }
-
+  
   yearly_means <- array(NA_real_, dim = c(length(lon), length(lat), length(uyears)))
-
+  
   for (i in seq_along(uyears)) {
     idx <- which(years == uyears[i])
     yearly_means[,,i] <- apply(surface_array[,,idx], c(1,2), mean, na.rm = TRUE)
   }
-
+  
   lon_dim  <- ncdim_def("lon",  "degrees_east",  lon)
   lat_dim  <- ncdim_def("lat",  "degrees_north", lat)
   year_dim <- ncdim_def("year", "year", uyears)
-
+  
   var_def <- ncvar_def(
     name = variable,
     units = var_units,
@@ -95,11 +110,11 @@ monthly_to_yearly_nc <- function(
     missval = -999,
     prec = "float"
   )
-
+  
   nc_out <- nc_create(output_file, vars = list(var_def))
   ncvar_put(nc_out, var_def, yearly_means)
   nc_close(nc_out)
-
+  
   message("Yearly surface NetCDF written:\n", output_file)
   invisible(output_file)
 }
@@ -116,7 +131,8 @@ variables <- c(
   # "tob","o2-bot","o2-surf","ph-bot","ph-surf", "siconc",
   # "so-bot","so-surf"
   # "intpp","intppdiat"
-  "uo","vo"
+  "uo",
+  "vo"
 )
 
 # lapply over variables
@@ -124,11 +140,11 @@ lapply(variables, function(var) {
   monthly_to_yearly_nc(
     base_dir = "/Volumes/Enterprise/Data/FishMip/fishmip_2300",
     model    = "ipsl-cm6a-lr",
-    scenario = "ssp126",
+    scenario = "historical",
     variable = var,
     ensemble = "r1i1p1f1",
     resolution = "30arcmin",
-    period = "2101_2300"
+    period = "1850_2014"
   )
 })
 
@@ -145,197 +161,6 @@ Make sure the 1851 to 2100 and 2101 to 2300 data line up
 
 ```{r}
 
-
-# Open the yearly NetCDF file
-
-check_climate <- function(
-    var_name,
-    model = "ipsl-cm6a-lr",
-    scenario = "ssp126"){
-  
-  variable_name <- ifelse(var_name %in% c("o2-bot", "ph-bot", "so-bot"), 
-                   gsub("-bot$", "", var_name), var_name)
-  
-  
-  
-  nc <- nc_open(
-    paste0("/Volumes/Enterprise/Data/FishMip/fishmip_2300/",model,"/",scenario,"/yearly/",model,"_r1i1p1f1_",scenario,"_",var_name,"_30arcmin_global_yearly_2101_2300.nc")
-  )
-  
-  # Read variables
-  variable <- ncvar_get(nc, variable_name)   # lon x lat x year
-  years <- ncvar_get(nc, "year")
-  
-  nc_close(nc)
-  
-  # Compute global mean for each year
-  global_mean <- apply(variable, 3, mean, na.rm = TRUE)
-  
-  
-  # transform global_mean to df
-  df_f <- data.frame(
-    year = years,
-    variable = global_mean
-  )
-  
-  
-  nc_hist <- nc_open(
-    paste0("/Volumes/Enterprise/Data/FishMip/fishmip_2300/",model,"/",scenario,"/yearly/",model,"_r1i1p1f1_",scenario,"_",var_name,"_30arcmin_global_yearly_2015_2100.nc")
-  )
-  
-  # Read variables
-  years_h <- ncvar_get(nc_hist, "year")
-  variable_h <- ncvar_get(nc_hist, variable_name)   # lon x lat x year
-  
-  nc_close(nc_hist)
-  
-  # Compute global mean for each year
-  global_mean_h <- apply(variable_h, 3, mean, na.rm = TRUE)
-  
-  
-  # transform global_mean to df
-  df_h <- data.frame(
-    year = years_h,
-    variable = global_mean_h
-  )
-  
-  nc_pi <- nc_open(
-    paste0("/Volumes/Enterprise/Data/FishMip/fishmip_2300/",model,"/historical/yearly/",model,"_r1i1p1f1_historical_",var_name,"_30arcmin_global_yearly_1850_2014.nc")
-  )
-  
-  # Read variables
-  years_pi <- ncvar_get(nc_pi, "year")
-  variable_pi <- ncvar_get(nc_pi, variable_name)   # lon x lat x year
-  
-  nc_close(nc_pi)
-  
-  # Compute global mean for each year
-  global_mean_pi <- apply(variable_pi, 3, mean, na.rm = TRUE)
-  
-  
-  # transform global_mean to df
-  df_pi <- data.frame(
-    year = years_pi,
-    variable = global_mean_pi
-  )
-  
-  
-  tidy_df <- bind_rows(df_f,df_h,df_pi)
-  
-  plot <-
-    tidy_df %>% 
-    ggplot(aes(x=year,y=variable))+
-    geom_line()
-  
-  plot_name <- paste0("/Volumes/Enterprise/Data/FishMip/fishmip_2300/",model,"/y_figures/",var_name,"_1850_2300.png")
-  
-  ggsave(
-    filename = plot_name,
-    plot = plot,
-    width = 8,
-    height = 5
-  )
-  
-}
-
-# check_climate(
-#   var_name = "tob",
-#   model = "ipsl-cm6a-lr",
-#   scenario = "ssp126"
-# )
-
-variables <- c(
-  # "tos",
-  # "tob","o2-bot","o2-surf","ph-bot","ph-surf", "siconc",
-  # "so-bot","so-surf"
-  # "intpp","intppdiat"
-)
-
-lapply(variables, check_climate, model = "ipsl-cm6a-lr",scenario = "ssp126")
-
-```
-
-# Joint year data 
-
-```{r}
-
-merge_early_late_nc <- function(path_early, path_late,path_future,out_dir) {
-  
-  # --- Open both files ---
-  nc_early <- nc_open(path_early)
-  nc_late  <- nc_open(path_late)
-  nc_future <- nc_open(path_future)
-  
-  # --- Read spatial coords (lon, lat) ---
-  lon       <- ncvar_get(nc_early, "lon")
-  lat       <- ncvar_get(nc_early, "lat")
-  
-  # --- Get the variable name (the 3D epi variable) ---
-  varname <- setdiff(names(nc_early$var), c("lon", "lat", "time_var"))[[1]]
-  if (is.null(varname)) stop("No suitable 3D variable found in ", path_early)
-  
-  # --- Read data for this variable ---
-  data_early <- ncvar_get(nc_early, varname)  # 720 x 360 x 97
-  data_late  <- ncvar_get(nc_late,  varname)  # 720 x 360 x 203
-  data_future  <- ncvar_get(nc_future,  varname)  # 720 x 360 x 203
-  
-  # --- Concatenate along time (3rd dim) ---
-  data_full  <- abind(data_early, data_late, data_future, along = 3)
-  
-  # --- Time vector: 1850–2300 annual (400 years) ---
-  time_full  <- 1850:2300
-  
-  if (length(time_full) != dim(data_full)[3]) {
-    stop("Time length mismatch: 1850–2300 (300) vs data dimension (",
-         dim(data_full)[3], ") for ", varname)
-  }
-  
-  # --- Define dimensions (using the repaired 300‑year time) ---
-  dim_lon  <- ncdim_def("lon",      "degrees_east",  lon,  create_dimvar = TRUE)
-  dim_lat  <- ncdim_def("lat",      "degrees_north", lat,  create_dimvar = TRUE)
-  dim_time <- ncdim_def("time_dim", "time_steps", time_full, unlim = TRUE, create_dimvar = TRUE)
-  
-  # --- Define variables (same varname as input) ---
-  var_data <- ncvar_def(
-    varname, "merged", list(dim_lon, dim_lat, dim_time), -9999, prec = "double"
-  )
-  var_time <- ncvar_def(
-    "time_var", "yyyy", list(dim_time), NULL, prec = "float"
-  )
-  
-  # --- Output path with variable name ---
-  basename_early <- basename(path_early)
-  outname <- gsub("_30arcmin_global_yearly_1850_2014.nc", "_yearly_1850_2300_05x05.nc",
-                  basename_early, fixed = TRUE)
-  outname <- gsub("_historical_", "_",
-                  outname, fixed = TRUE)
-  outname <- gsub("^", "merged_", outname, fixed = TRUE)
-  path_merged <- file.path(out_dir, outname)
-  
-  # --- Create and write merged file ---
-  ncid <- nc_create(path_merged, list(var_time, var_data))
-  ncvar_put(ncid, "lon",       lon)
-  ncvar_put(ncid, "lat",       lat)
-  ncvar_put(ncid, "time_var",  time_full)
-  ncvar_put(ncid, varname,     data_full)
-  
-  # --- Copy global attributes from early file ---
-  gatts_early <- ncatt_get(nc_early, 0)
-  for(nm in names(gatts_early)) {
-    ncatt_put(ncid, 0, nm, gatts_early[[nm]])
-  }
-  
-  nc_close(nc_early)
-  nc_close(nc_late)
-  nc_close(ncid)
-  
-  cat("Merged:", path_merged, "\n")
-}
-
-```
-
-
-```{r}
 merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
   library(ncdf4)
   library(abind)
@@ -526,20 +351,291 @@ merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
 
 ```
 
+### Merge for uo
+
+```{r}
+merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
+  
+  library(ncdf4)
+  library(abind)
+  
+  # --- Open files ---
+  nc_early  <- nc_open(path_early)
+  nc_late   <- nc_open(path_late)
+  nc_future <- nc_open(path_future)
+  
+  on.exit({
+    try(nc_close(nc_early), silent = TRUE)
+    try(nc_close(nc_late), silent = TRUE)
+    try(nc_close(nc_future), silent = TRUE)
+  }, add = TRUE)
+  
+  # --- Read spatial coordinates ---
+  lon <- ncvar_get(nc_early, "lon")
+  lat <- ncvar_get(nc_early, "lat")
+  
+  # --- Identify main data variable ---
+  exclude_vars <- c(
+    "lon", "lat", "time", "time_var", "year",
+    "olevel", "olevel_bnds", "bnds"
+  )
+  
+  candidate_vars <- setdiff(names(nc_early$var), exclude_vars)
+  
+  if (length(candidate_vars) == 0) {
+    stop("No suitable data variable found in: ", path_early)
+  }
+  
+  varname <- candidate_vars[1]
+  
+  # --- Read a time/year coordinate from an input file ---
+  read_time_coord <- function(nc) {
+    
+    if ("time_var" %in% names(nc$var)) {
+      return(ncvar_get(nc, "time_var"))
+    }
+    
+    if ("time" %in% names(nc$dim)) {
+      return(nc$dim[["time"]]$vals)
+    }
+    
+    if ("year" %in% names(nc$dim)) {
+      return(nc$dim[["year"]]$vals)
+    }
+    
+    stop(
+      "No supported temporal coordinate found. Available dimensions: ",
+      paste(names(nc$dim), collapse = ", ")
+    )
+  }
+  
+  # --- Read 3D data or first ocean level of 4D data ---
+  read_target_var <- function(nc, varname) {
+    
+    dims <- sapply(nc$var[[varname]]$dim, function(x) x$name)
+    
+    # Variables already stored as lon x lat x time/year
+    if (identical(dims, c("lon", "lat", "time")) ||
+        identical(dims, c("lon", "lat", "year")) ||
+        identical(dims, c("lon", "lat", "time_var")) ||
+        identical(dims, c("longitude", "latitude", "time")) ||
+        identical(dims, c("longitude", "latitude", "year")) ||
+        identical(dims, c("longitude", "latitude", "time_var"))) {
+      
+      return(drop(ncvar_get(nc, varname)))
+    }
+    
+    # Variables stored as lon x lat x olevel x time/year
+    if (identical(dims, c("lon", "lat", "olevel", "time")) ||
+        identical(dims, c("lon", "lat", "olevel", "year")) ||
+        identical(dims, c("lon", "lat", "olevel", "time_var")) ||
+        identical(dims, c("longitude", "latitude", "olevel", "time")) ||
+        identical(dims, c("longitude", "latitude", "olevel", "year")) ||
+        identical(dims, c("longitude", "latitude", "olevel", "time_var"))) {
+      
+      lon_n    <- nc$dim[[dims[1]]]$len
+      lat_n    <- nc$dim[[dims[2]]]$len
+      lev_n    <- nc$dim[[dims[3]]]$len
+      period_n <- nc$dim[[dims[4]]]$len
+      
+      if (lev_n < 1) {
+        stop("No ocean-level dimension found for variable: ", varname)
+      }
+      
+      data <- ncvar_get(
+        nc,
+        varname,
+        start = c(1, 1, 1, 1),
+        count = c(lon_n, lat_n, 1, period_n)
+      )
+      
+      return(drop(data))
+    }
+    
+    stop(
+      "Unsupported dimensions for ", varname, ": ",
+      paste(dims, collapse = ", ")
+    )
+  }
+  
+  # --- Read data arrays ---
+  data_early  <- read_target_var(nc_early, varname)
+  data_late   <- read_target_var(nc_late, varname)
+  data_future <- read_target_var(nc_future, varname)
+  
+  # --- Confirm lon x lat x period arrays ---
+  if (length(dim(data_early)) != 3 ||
+      length(dim(data_late)) != 3 ||
+      length(dim(data_future)) != 3) {
+    stop("After reading, one or more arrays are not 3D: lon x lat x period.")
+  }
+  
+  # --- Merge across the temporal dimension ---
+  data_full <- abind(data_early, data_late, data_future, along = 3)
+  
+  # --- Merge coordinate vectors ---
+  time_early  <- read_time_coord(nc_early)
+  time_late   <- read_time_coord(nc_late)
+  time_future <- read_time_coord(nc_future)
+  
+  time_full <- c(time_early, time_late, time_future)
+  
+  if (length(time_full) != dim(data_full)[3]) {
+    stop(
+      "Time-length mismatch: coordinate vector has ", length(time_full),
+      " values but merged data has ", dim(data_full)[3],
+      " temporal layers."
+    )
+  }
+  
+  # --- Retrieve temporal metadata ---
+  source_time_dim <- if ("time" %in% names(nc_early$dim)) {
+    "time"
+  } else if ("time_var" %in% names(nc_early$dim)) {
+    "time_var"
+  } else if ("year" %in% names(nc_early$dim)) {
+    "year"
+  } else {
+    NULL
+  }
+  
+  time_units <- "year"
+  time_calendar <- NA_character_
+  
+  if (!is.null(source_time_dim)) {
+    
+    source_units <- ncatt_get(nc_early, source_time_dim, "units")$value
+    source_calendar <- ncatt_get(nc_early, source_time_dim, "calendar")$value
+    
+    if (!is.null(source_units) &&
+        length(source_units) == 1 &&
+        !is.na(source_units)) {
+      time_units <- source_units
+    }
+    
+    if (!is.null(source_calendar) &&
+        length(source_calendar) == 1 &&
+        !is.na(source_calendar)) {
+      time_calendar <- source_calendar
+    }
+  }
+  
+  # --- Retrieve data metadata ---
+  fillvalue <- ncatt_get(nc_early, varname, "_FillValue")$value
+  if (is.null(fillvalue) || length(fillvalue) == 0 || is.na(fillvalue)) {
+    fillvalue <- -9999
+  }
+  
+  var_units <- ncatt_get(nc_early, varname, "units")$value
+  if (is.null(var_units) || length(var_units) == 0 || is.na(var_units)) {
+    var_units <- "unknown"
+  }
+  
+  # --- Define output dimensions ---
+  dim_lon <- ncdim_def(
+    name = "lon",
+    units = "degrees_east",
+    vals = lon,
+    create_dimvar = TRUE
+  )
+  
+  dim_lat <- ncdim_def(
+    name = "lat",
+    units = "degrees_north",
+    vals = lat,
+    create_dimvar = TRUE
+  )
+  
+  dim_time <- ncdim_def(
+    name = "time",
+    units = time_units,
+    vals = time_full,
+    unlim = TRUE,
+    create_dimvar = TRUE
+  )
+  
+  # --- Define output data variable ---
+  var_data <- ncvar_def(
+    name = varname,
+    units = var_units,
+    dim = list(dim_lon, dim_lat, dim_time),
+    missval = fillvalue,
+    prec = "double"
+  )
+  
+  # --- Construct output file name ---
+  basename_early <- basename(path_early)
+  
+  outname <- basename_early
+  outname <- gsub("_historical_", "_", outname, fixed = TRUE)
+  outname <- gsub(
+    "_30arcmin_global_yearly_1850_2014.nc",
+    "_yearly_1850_2300_05x05.nc",
+    outname
+  )
+  outname <- gsub(
+    "_30arcmin_global_monthly_1850_2014.nc",
+    "_monthly_1850_2300_05x05.nc",
+    outname
+  )
+  
+  dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+  path_merged <- file.path(out_dir, outname)
+  
+  # --- Create output NetCDF ---
+  ncid <- nc_create(path_merged, vars = list(var_data))
+  
+  # Dimension coordinate variables are automatically created by ncdim_def().
+  ncvar_put(ncid, varname, data_full)
+  
+  # --- Copy data-variable attributes ---
+  var_atts <- ncatt_get(nc_early, varname)
+  
+  for (nm in names(var_atts)) {
+    if (!nm %in% c("_FillValue", "units")) {
+      ncatt_put(ncid, varname, nm, var_atts[[nm]])
+    }
+  }
+  
+  # --- Add calendar attribute when supplied ---
+  if (!is.na(time_calendar)) {
+    ncatt_put(ncid, "time", "calendar", time_calendar)
+  }
+  
+  # --- Copy global attributes ---
+  global_atts <- ncatt_get(nc_early, 0)
+  
+  for (nm in names(global_atts)) {
+    ncatt_put(ncid, 0, nm, global_atts[[nm]])
+  }
+  
+  # --- Close output file ---
+  nc_close(ncid)
+  
+  cat("Merged:", path_merged, "\n")
+  
+  invisible(path_merged)
+}
+
+```
+
+
+
+
 ```{r}
 
 path_early <- list.files(
-  "/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/historical/",
+  "/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/historical/yearly/",
   pattern = ".nc", full.names = TRUE
 )
 
 path_late <- list.files(
-  "/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/ssp126/",
+  "/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/ssp126/yearly/",
   pattern = "_2015_2100.nc", full.names = TRUE
 )
 
 path_future <- list.files(
-  "/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/ssp126/",
+  "/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/ssp126/yearly/",
   pattern = "_2101_2300.nc", full.names = TRUE
 )
 
@@ -570,13 +666,14 @@ if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
 i = 1
 for (i in seq_along(path_early)) {
   # for (i in 1:2) {
-    merge_early_late_nc(path_early[i], path_late[i], path_future[i], out_dir)
-  }
+  merge_early_late_nc(path_early[i], path_late[i], path_future[i], out_dir)
+}
 
 merge_early_late_nc(
-  path_early = path_early [1],
-  path_late = path_late[1],
-  path_future = path_future[1], out_dir
+  path_early = path_early [12],
+  path_late = path_late[12],
+  path_future = path_future[12],
+  out_dir
 )
 ```
 
@@ -591,13 +688,19 @@ test_plot <-function(path_merged){
   nc <- nc_open(path_merged)
   
   if(nc$nvars == 2){
-  var_name <- nc$var[[2]]$name
+    var_name <- nc$var[[2]]$name
   }else{
     var_name <- nc$var[[1]]$name
   }
   
   pH   <- ncvar_get(nc, var_name)   # 720 x 360 x 300
-  time <- ncvar_get(nc, "time_dim") # 300‑element vector
+  
+  if(var_name %in% c("uo","vo")){
+  time <- ncvar_get(nc, "time") # 300‑element vector  
+  }else(
+    time <- ncvar_get(nc, "time_dim") # 300‑element vector
+  )
+  
   
   nc_close(nc)
   
@@ -629,19 +732,19 @@ test_plot <-function(path_merged){
     scale_x_continuous(
       limits = c(1850, 2300),
       breaks = seq(1850, 2300, by = 50)
-      ) # format y-axis with commas
+    ) # format y-axis with commas
   
   ggsave(
     last_plot(),
     filename = paste0("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined_figures/", var_name, "_global_mean_trend.jpg"),
-         width = 8, height = 5)
+    width = 8, height = 5)
   
 }
 
 path_list <- list.files("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined",pattern = ".nc",full.names = T)
 
 
-test_plot(path_list[1])
+test_plot(path_list[14])
 
 lapply(path_list, test_plot)
 ```
@@ -652,11 +755,11 @@ lapply(path_list, test_plot)
 
 # Calculates totalphy2 based on available phytoplankton size classes from different ESMs
 
-  # Read diatom production data
-  diat_nc <- nc_open("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined/ipsl-cm6a-lr_r1i1p1f1_intppdiat_yearly_1850_2300_05x05.nc")
+# Read diatom production data
+diat_nc <- nc_open("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined/ipsl-cm6a-lr_r1i1p1f1_intppdiat_yearly_1850_2300_05x05.nc")
 
-    npp_nc <- nc_open("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined/ipsl-cm6a-lr_r1i1p1f1_intpp_yearly_1850_2300_05x05.nc")
-    
+npp_nc <- nc_open("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined/ipsl-cm6a-lr_r1i1p1f1_intpp_yearly_1850_2300_05x05.nc")
+
 diat <- ncvar_get(diat_nc, "intppdiat")
 npp  <- ncvar_get(npp_nc,  "intpp")
 
@@ -695,30 +798,9 @@ ncatt_put(nc_out, 0, "history", paste("Created", Sys.time()))
 nc_close(nc_out)
 
 test_plot("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined/ipsl-cm6a-lr_r1i1p1f1_totalphy2_yearly_1850_2300_05x05.nc")
-  
+
 ```
 
 # Change variable name
 
-```{r}
-
-path_list <- list.files("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined",pattern = ".nc",full.names = T)
-
-
-nc_open(path_list[1])
-
-old = "u", new = "AdvectionU"
-old ="v", new = "AdvectionV"
-old = "so-surf", new ="Salinity_surf" 
-old = "so-btm", new = "Salinity_btm"
-old = "ph-surf",new ="htotal_surf" 
-old = "ph-btm",new ="htotal_btm" 
-old = "tob", new ="bot_temp"
-old = "tob", new ="SST"
-old = "o2-bot", new ="O2_btm" 
-old = "o2-surf", new ="O2_surf"
-old = "siconc",new ="IceExt" 
-
-```
-
-
+I just did it manually...
