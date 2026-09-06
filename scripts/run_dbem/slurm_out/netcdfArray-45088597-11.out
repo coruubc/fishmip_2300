@@ -1,0 +1,21 @@
+Extracting environmental data
+Environmental data extracted
+Current working directory is /project/6006523/jepa/tipping_points/scripts/run_dbem
+Starting run at:Fri 19 Jun 2026 09:00:34 AM PDT
+“Starting task: 11”
+ SppListRoot: 
+ ~/projects/def-wailung/Data/Species/TaxonList/tipping_point/                   
+                                                                                
+                                                                                
+                    
+ Species list: 11  
+ TipmipSppPel11.txt  
+ Initializing, loading files...
+          38
+ Year         1811  not found in NetCDF file!
+ NetCDF Error:NetCDF: Index exceeds dimension bound
+Program ADRDisp finished with exit code 0 at: Fri 19 Jun 2026 09:00:37 AM PDT
+Compressing DBEM outputs
+Compressed as TIPMIP_HOS_COMBINED_tipmip_pel_h_TipmipSppPel11_netcdf.tar.gz
+Creating netCDF
+Finished!

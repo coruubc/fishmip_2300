@@ -1,0 +1,16 @@
+ CCSc IPSL2300
+ sSSP SSP126
+ rsfile RunSppList
+ rpath fishmip2300
+ tpath TaxonDataC0
+ SppListRoot ~/projects/def-wailung/Data/Species/TaxonList/
+ FHS    1.00
+ FEEZ    1.00
+ MPApath no_mpa
+ iIniStartYear 1851
+ iIniEndYear 1901
+ iSimStartYear 1851
+ iSimEndYear 2300
+ iIniStartYear2 1851
+ iIniEndYear2 1901
+ MPAScStartYear 1951

@@ -1,0 +1,30 @@
+cp: cannot stat '/home/jepa/projects/def-wailung/Data/Climate/tipping_point/pi_runs/PEL/TIPMIP_PI/SST_TIPMIP_PI_y.nc': No such file or directory
+cp: cannot stat '/home/jepa/projects/def-wailung/Data/Climate/tipping_point/pi_runs/PEL/TIPMIP_PI/bot_temp_TIPMIP_PI_y.nc': No such file or directory
+cp: cannot stat '/home/jepa/projects/def-wailung/Data/Climate/tipping_point/pi_runs/PEL/TIPMIP_PI/AdvectionU_TIPMIP_PI_y.nc': No such file or directory
+cp: cannot stat '/home/jepa/projects/def-wailung/Data/Climate/tipping_point/pi_runs/PEL/TIPMIP_PI/AdvectionV_TIPMIP_PI_y.nc': No such file or directory
+cp: cannot stat '/home/jepa/projects/def-wailung/Data/Climate/tipping_point/pi_runs/PEL/TIPMIP_PI/htotal_btm_TIPMIP_PI_y.nc': No such file or directory
+cp: cannot stat '/home/jepa/projects/def-wailung/Data/Climate/tipping_point/pi_runs/PEL/TIPMIP_PI/htotal_surf_TIPMIP_PI_y.nc': No such file or directory
+cp: cannot stat '/home/jepa/projects/def-wailung/Data/Climate/tipping_point/pi_runs/PEL/TIPMIP_PI/O2_btm_TIPMIP_PI_y.nc': No such file or directory
+cp: cannot stat '/home/jepa/projects/def-wailung/Data/Climate/tipping_point/pi_runs/PEL/TIPMIP_PI/O2_surf_TIPMIP_PI_y.nc': No such file or directory
+cp: cannot stat '/home/jepa/projects/def-wailung/Data/Climate/tipping_point/pi_runs/PEL/TIPMIP_PI/Salinity_btm_TIPMIP_PI_y.nc': No such file or directory
+cp: cannot stat '/home/jepa/projects/def-wailung/Data/Climate/tipping_point/pi_runs/PEL/TIPMIP_PI/Salinity_surf_TIPMIP_PI_y.nc': No such file or directory
+cp: cannot stat '/home/jepa/projects/def-wailung/Data/Climate/tipping_point/pi_runs/PEL/TIPMIP_PI/IceExt_TIPMIP_PI_y.nc': No such file or directory
+cp: cannot stat '/home/jepa/projects/def-wailung/Data/Climate/tipping_point/pi_runs/PEL/TIPMIP_PI/totalphy2_TIPMIP_PI_y.nc': No such file or directory
+tar: tipmip_dem_pb: Cannot stat: No such file or directory
+tar: Exiting with failure status due to previous errors
+
+Due to MODULEPATH changes, the following have been reloaded:
+  1) mii/1.1.2
+
+The following have been reloaded with a version change:
+  1) StdEnv/2023 => StdEnv/2020
+  2) flexiblas/3.3.1 => flexiblas/3.0.4
+  3) gcc/12.3 => gcc/9.3.0
+  4) gcccore/.12.3 => gcccore/.9.3.0
+  5) gentoo/2023 => gentoo/2020
+  6) libfabric/1.18.0 => libfabric/1.10.1
+  7) openmpi/4.1.5 => openmpi/4.0.3
+  8) ucx/1.14.1 => ucx/1.8.0
+
+here() starts at /project/6006523/jepa/tipping_points
+here() starts at /project/6006523/jepa/tipping_points

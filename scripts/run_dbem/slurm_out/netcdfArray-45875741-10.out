@@ -1,0 +1,31 @@
+Extracting environmental data
+Environmental data extracted
+Current working directory is /project/6006523/jepa/tipping_points/scripts/run_dbem
+Starting run at:Thu 25 Jun 2026 07:16:09 PM PDT
+“Starting task: 10”
+ SppListRoot: 
+ ~/projects/def-wailung/Data/Species/TaxonList/tipping_point/                   
+                                                                                
+                                                                                
+                    
+ Species list: 10  
+ TipmipSppMes10.txt  
+ Initializing, loading files...
+           2
+ 610238    
+ /localscratch/jepa.45875741.0/tipmip_mes_h0/610238                             
+  
+ Read Parameters...
+ Running Taxon B_pterotum          
+ ~/projects/def-wailung/Data/Species/Distributions/S610238.csv                  
+                                          
+  3.710343132585779E-007
+ Thread           0  starting...
+ 605098    
+ /localscratch/jepa.45875741.0/tipmip_mes_h0/605098                             
+  
+ Read Parameters...
+ Running Taxon B_antarcticus       
+ ~/projects/def-wailung/Data/Species/Distributions/S605098.csv                  
+                                          
+  0.000000000000000E+000

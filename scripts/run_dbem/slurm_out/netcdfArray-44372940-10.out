@@ -1,0 +1,22 @@
+Extracting environmental data
+Environmental data extracted
+Current working directory is /project/6006523/jepa/tipping_points/scripts/run_dbem
+Starting run at:Sun 14 Jun 2026 02:33:49 PM PDT
+“Starting task: 10”
+ SppListRoot: 
+ ~/projects/def-wailung/Data/Species/TaxonList/tipping_point/                   
+                                                                                
+                                                                                
+                    
+ Species list: 10  
+ TipmipSppMes10.txt  
+ Initializing, loading files...
+           2
+ Variable not found: IceExt
+ File: /localscratch/jepa.44372940.0/IceExt_TIPMIP_HOS_COMBINED_y.nc
+ NetCDF Error:NetCDF: Variable not found
+Program ADRDisp finished with exit code 0 at: Sun 14 Jun 2026 02:33:53 PM PDT
+Compressing DBEM outputs
+Compressed as TIPMIP_HOS_COMBINED_tipmip_mesh_TipmipSppMes10_netcdf.tar.gz
+Creating netCDF
+Finished!

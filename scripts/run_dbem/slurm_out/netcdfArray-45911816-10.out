@@ -1,0 +1,157 @@
+Extracting environmental data
+Environmental data extracted
+Current working directory is /project/6006523/jepa/tipping_points/scripts/run_dbem
+Starting run at:Fri 26 Jun 2026 04:42:09 AM PDT
+“Starting task: 10”
+ SppListRoot: 
+ ~/projects/def-wailung/Data/Species/TaxonList/tipping_point/                   
+                                                                                
+                                                                                
+                    
+ Species list: 10  
+ TipmipSppDem10.txt  
+ Initializing, loading files...
+          36
+ 600203    
+ /localscratch/jepa.45911816.0/tipmip_dem_h/600203                              
+  
+ Read Parameters...
+ Running Taxon B_boops             
+ ~/projects/def-wailung/Data/Species/Distributions/S600203.csv                  
+                                          
+  3.310016217792365E-007
+ Thread           0  starting...
+ 600319    
+ /localscratch/jepa.45911816.0/tipmip_dem_h/600319                              
+  
+ Read Parameters...
+ Running Taxon B_saida             
+ ~/projects/def-wailung/Data/Species/Distributions/S600319.csv                  
+                                          
+  1.457899108213700E-007
+ Thread           0  starting...
+ 690052    
+ /localscratch/jepa.45911816.0/tipmip_dem_h/690052                              
+  
+ Read Parameters...
+ Running Taxon C_sapidus           
+ ~/projects/def-wailung/Data/Species/Distributions/S690052.csv                  
+                                          
+  3.961501409452951E-007
+ Thread           0  starting...
+ 600653    
+ /localscratch/jepa.45911816.0/tipmip_dem_h/600653                              
+  
+ Read Parameters...
+ Running Taxon C_squamosus         
+ ~/projects/def-wailung/Data/Species/Distributions/S600653.csv                  
+                                          
+  3.115795394652565E-007
+ Thread           0  starting...
+ 600662    
+ /localscratch/jepa.45911816.0/tipmip_dem_h/600662                              
+  
+ Read Parameters...
+ Running Taxon C_coelolepis        
+ ~/projects/def-wailung/Data/Species/Distributions/S600662.csv                  
+                                          
+  3.699199145401623E-007
+ Thread           0  starting...
+ 607110    
+ /localscratch/jepa.45911816.0/tipmip_dem_h/607110                              
+  
+ Read Parameters...
+ Running Taxon C_myersi            
+ ~/projects/def-wailung/Data/Species/Distributions/S607110.csv                  
+                                          
+  1.771822119782662E-007
+ Thread           0  starting...
+ 690009    
+ /localscratch/jepa.45911816.0/tipmip_dem_h/690009                              
+  
+ Read Parameters...
+ Running Taxon C_virginica         
+ ~/projects/def-wailung/Data/Species/Distributions/S690009.csv                  
+                                          
+  4.103529700776320E-007
+ Thread           0  starting...
+ 607111    
+ /localscratch/jepa.45911816.0/tipmip_dem_h/607111                              
+  
+ Read Parameters...
+ Running Taxon C_antarcticus       
+ ~/projects/def-wailung/Data/Species/Distributions/S607111.csv                  
+                                          
+  1.765641971822606E-007
+ Thread           0  starting...
+ 600467    
+ /localscratch/jepa.45911816.0/tipmip_dem_h/600467                              
+  
+ Read Parameters...
+ Running Taxon D_eleginoides       
+ ~/projects/def-wailung/Data/Species/Distributions/S600467.csv                  
+                                          
+  4.713543640202377E-007
+ Thread           0  starting...
+ 690042    
+ /localscratch/jepa.45911816.0/tipmip_dem_h/690042                              
+  
+ Read Parameters...
+ Running Taxon P_merguiensis       
+ ~/projects/def-wailung/Data/Species/Distributions/S690042.csv                  
+                                          
+  3.454145856351953E-007
+ Thread           0  starting...
+ 600308    
+ /localscratch/jepa.45911816.0/tipmip_dem_h/600308                              
+  
+ Read Parameters...
+ Running Taxon G_macrocephalus     
+ ~/projects/def-wailung/Data/Species/Distributions/S600308.csv                  
+                                          
+  2.506870652405625E-007
+ Thread           0  starting...
+ 604239    
+ /localscratch/jepa.45911816.0/tipmip_dem_h/604239                              
+  
+ Read Parameters...
+ Running Taxon H_platessoides      
+ ~/projects/def-wailung/Data/Species/Distributions/S604239.csv                  
+                                          
+  3.467426750356497E-007
+ Thread           0  starting...
+ 690321    
+ /localscratch/jepa.45911816.0/tipmip_dem_h/690321                              
+  
+ Read Parameters...
+ Running Taxon J_edwardsii         
+ ~/projects/def-wailung/Data/Species/Distributions/S690321.csv                  
+                                          
+  3.078636114892678E-007
+ Thread           0  starting...
+ 600346    
+ /localscratch/jepa.45911816.0/tipmip_dem_h/600346                              
+  
+ Read Parameters...
+ Running Taxon L_calcarifer        
+ ~/projects/def-wailung/Data/Species/Distributions/S600346.csv                  
+                                          
+  2.750892981047136E-007
+ Thread           0  starting...
+ 690054    
+ /localscratch/jepa.45911816.0/tipmip_dem_h/690054                              
+  
+ Read Parameters...
+ Running Taxon P_stylirostris      
+ ~/projects/def-wailung/Data/Species/Distributions/S690054.csv                  
+                                          
+  3.808056102663215E-007
+ Thread           0  starting...
+ 600417    
+ /localscratch/jepa.45911816.0/tipmip_dem_h/600417                              
+  
+ Read Parameters...
+ Running Taxon M_ancylodon         
+ ~/projects/def-wailung/Data/Species/Distributions/S600417.csv                  
+                                          
+  3.867293439152598E-007

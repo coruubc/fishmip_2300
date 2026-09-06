@@ -1,0 +1,49 @@
+Extracting environmental data
+Environmental data extracted
+Current working directory is /project/6006523/jepa/tipping_points/scripts/run_dbem
+Starting run at:Thu 25 Jun 2026 08:58:10 AM PDT
+“Starting task: 10”
+ SppListRoot: 
+ ~/projects/def-wailung/Data/Species/TaxonList/tipping_point/                   
+                                                                                
+                                                                                
+                    
+ Species list: 10  
+ TipmipSppPel10.txt  
+ Initializing, loading files...
+          38
+ 690005    
+ /localscratch/jepa.45775739.0/tipmip_dem_p0/690005                             
+  
+ Read Parameters...
+ Running Taxon A_japonicus         
+ ~/projects/def-wailung/Data/Species/Distributions/S690005.csv                  
+                                          
+  3.374941797418262E-007
+ Thread           0  starting...
+ 603810    
+ /localscratch/jepa.45775739.0/tipmip_dem_p0/603810                             
+  
+ Read Parameters...
+ Running Taxon A_denticulatus      
+ ~/projects/def-wailung/Data/Species/Distributions/S603810.csv                  
+                                          
+  2.879859004960573E-007
+ Thread           0  starting...
+ 600094    
+ /localscratch/jepa.45775739.0/tipmip_dem_p0/600094                             
+  
+ Read Parameters...
+ Running Taxon A_thazard           
+ ~/projects/def-wailung/Data/Species/Distributions/S600094.csv                  
+                                          
+  3.220250606772445E-007
+ Thread           0  starting...
+ 601589    
+ /localscratch/jepa.45775739.0/tipmip_dem_p0/601589                             
+  
+ Read Parameters...
+ Running Taxon B_patronus          
+ ~/projects/def-wailung/Data/Species/Distributions/S601589.csv                  
+                                          
+  2.569589441669962E-007

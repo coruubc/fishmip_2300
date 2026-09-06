@@ -1,0 +1,20 @@
+Extracting environmental data
+Environmental data extracted
+Current working directory is /project/6006523/jepa/tipping_points/scripts/run_dbem
+Starting run at:Wed 17 Jun 2026 06:08:01 AM PDT
+“Starting task: 10”
+ SppListRoot: 
+ ~/projects/def-wailung/Data/Species/TaxonList/tipping_point/                   
+                                                                                
+                                                                                
+                    
+ Species list: 10  
+ TipmipSppList10.txt 
+ Error opening file:
+ ~/projects/def-wailung/Data/Species/TaxonList/tipping_point/TipmipSppList10.txt
+ Initializing, loading files...
+Program ADRDisp finished with exit code 29 at: Wed 17 Jun 2026 06:08:01 AM PDT
+Compressing DBEM outputs
+Compressed as TIPMIP_HOS_COMBINED_tipmip_pel_ht_TipmipSppList10_netcdf.tar.gz
+Creating netCDF
+Finished!

@@ -1,0 +1,22 @@
+Extracting environmental data
+Environmental data extracted
+Current working directory is /project/6006523/jepa/tipping_points/scripts/run_dbem
+Starting run at:Sun 19 Jul 2026 12:33:01 PM PDT
+“Starting task: 11”
+ SppListRoot: 
+ ~/projects/def-wailung/Data/Species/TaxonList/tipping_point/                   
+                                                                                
+                                                                                
+                    
+ Species list: 11  
+ TipmipSppDem11.txt  
+ Initializing, loading files...
+           9
+ 600309    
+ /localscratch/jepa.49621527.0/tipmip_dem_x/600309                              
+  
+ Read Parameters...
+ Running Taxon G_ogac              
+ ~/projects/def-wailung/Data/Species/Distributions/S600309.csv                  
+                                          
+  2.786077463845515E-007

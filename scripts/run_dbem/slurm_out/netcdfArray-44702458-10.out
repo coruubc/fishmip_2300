@@ -1,0 +1,77 @@
+Extracting environmental data
+Environmental data extracted
+Current working directory is /project/6006523/jepa/tipping_points/scripts/run_dbem
+Starting run at:Wed 17 Jun 2026 06:52:49 AM PDT
+“Starting task: 10”
+ SppListRoot: 
+ ~/projects/def-wailung/Data/Species/TaxonList/tipping_point/                   
+                                                                                
+                                                                                
+                    
+ Species list: 10  
+ TippingSppList10.txt
+ Initializing, loading files...
+          13
+ 601661    
+ /localscratch/jepa.44702458.0/tipmip_pel_pht/601661                            
+  
+ Read Parameters...
+ Running Taxon E_capensis          
+ ~/projects/def-wailung/Data/Species/Distributions/S601661.csv                  
+                                          
+  6.189925787779353E-007
+ Thread           0  starting...
+ 601511    
+ /localscratch/jepa.44702458.0/tipmip_pel_pht/601511                            
+  
+ Read Parameters...
+ Running Taxon S_longiceps         
+ ~/projects/def-wailung/Data/Species/Distributions/S601511.csv                  
+                                          
+  3.296413604373099E-007
+ Thread           0  starting...
+ 601357    
+ /localscratch/jepa.44702458.0/tipmip_pel_pht/601357                            
+  
+ Read Parameters...
+ Running Taxon S_sprattus          
+ ~/projects/def-wailung/Data/Species/Distributions/S601357.csv                  
+                                          
+  2.457001557469122E-007
+ Thread           0  starting...
+ 605382    
+ /localscratch/jepa.44702458.0/tipmip_pel_pht/605382                            
+  
+ Read Parameters...
+ Running Taxon T_capensis          
+ ~/projects/def-wailung/Data/Species/Distributions/S605382.csv                  
+                                          
+  5.941962958912548E-007
+ Thread           0  starting...
+ 601365    
+ /localscratch/jepa.44702458.0/tipmip_pel_pht/601365                            
+  
+ Read Parameters...
+ Running Taxon T_trachurus         
+ ~/projects/def-wailung/Data/Species/Distributions/S601365.csv                  
+                                          
+  3.424411253005743E-007
+ Thread           0  starting...
+ 600325    
+ /localscratch/jepa.44702458.0/tipmip_pel_pht/600325                            
+  
+ Read Parameters...
+ Running Taxon M_hubbsi            
+ ~/projects/def-wailung/Data/Species/Distributions/S600325.csv                  
+                                          
+  5.603481553842548E-007
+ Thread           0  starting...
+ 600143    
+ /localscratch/jepa.44702458.0/tipmip_pel_pht/600143                            
+  
+ Read Parameters...
+ Running Taxon T_albacares         
+ ~/projects/def-wailung/Data/Species/Distributions/S600143.csv                  
+                                          
+  3.192047882208448E-007
+ Thread           0  starting...

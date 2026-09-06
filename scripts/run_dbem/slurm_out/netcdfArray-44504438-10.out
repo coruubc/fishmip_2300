@@ -1,0 +1,291 @@
+Extracting environmental data
+Environmental data extracted
+Current working directory is /project/6006523/jepa/tipping_points/scripts/run_dbem
+Starting run at:Tue 16 Jun 2026 08:01:16 AM PDT
+“Starting task: 10”
+ SppListRoot: 
+ ~/projects/def-wailung/Data/Species/TaxonList/tipping_point/                   
+                                                                                
+                                                                                
+                    
+ Species list: 10  
+ TippingSppList10.txt
+ Initializing, loading files...
+          13
+ 601661    
+ /localscratch/jepa.44504438.0/tipmip_pel_c_pit/601661                          
+  
+ Read Parameters...
+ Running Taxon E_capensis          
+ ~/projects/def-wailung/Data/Species/Distributions/S601661.csv                  
+                                          
+  6.417259261315424E-007
+ Thread           0  starting...
+ 601511    
+ /localscratch/jepa.44504438.0/tipmip_pel_c_pit/601511                          
+  
+ Read Parameters...
+ Running Taxon S_longiceps         
+ ~/projects/def-wailung/Data/Species/Distributions/S601511.csv                  
+                                          
+  3.404869225382966E-007
+ Thread           0  starting...
+ 601357    
+ /localscratch/jepa.44504438.0/tipmip_pel_c_pit/601357                          
+  
+ Read Parameters...
+ Running Taxon S_sprattus          
+ ~/projects/def-wailung/Data/Species/Distributions/S601357.csv                  
+                                          
+  2.576810373362549E-007
+ Thread           0  starting...
+ 605382    
+ /localscratch/jepa.44504438.0/tipmip_pel_c_pit/605382                          
+  
+ Read Parameters...
+ Running Taxon T_capensis          
+ ~/projects/def-wailung/Data/Species/Distributions/S605382.csv                  
+                                          
+  6.034318006964413E-007
+ Thread           0  starting...
+ 601365    
+ /localscratch/jepa.44504438.0/tipmip_pel_c_pit/601365                          
+  
+ Read Parameters...
+ Running Taxon T_trachurus         
+ ~/projects/def-wailung/Data/Species/Distributions/S601365.csv                  
+                                          
+  3.457963204960278E-007
+ Thread           0  starting...
+ 600325    
+ /localscratch/jepa.44504438.0/tipmip_pel_c_pit/600325                          
+  
+ Read Parameters...
+ Running Taxon M_hubbsi            
+ ~/projects/def-wailung/Data/Species/Distributions/S600325.csv                  
+                                          
+  5.612991426882095E-007
+ Thread           0  starting...
+ 600143    
+ /localscratch/jepa.44504438.0/tipmip_pel_c_pit/600143                          
+  
+ Read Parameters...
+ Running Taxon T_albacares         
+ ~/projects/def-wailung/Data/Species/Distributions/S600143.csv                  
+                                          
+  3.225492711846911E-007
+ Thread           0  starting...
+ 600069    
+ /localscratch/jepa.44504438.0/tipmip_pel_c_pit/600069                          
+  
+ Read Parameters...
+ Running Taxon G_morhua            
+ ~/projects/def-wailung/Data/Species/Distributions/S600069.csv                  
+                                          
+  3.335145991547607E-007
+ Thread           0  starting...
+ 600145    
+ /localscratch/jepa.44504438.0/tipmip_pel_c_pit/600145                          
+  
+ Read Parameters...
+ Running Taxon T_maccoyii          
+ ~/projects/def-wailung/Data/Species/Distributions/S600145.csv                  
+                                          
+  2.624165411722058E-007
+ Thread           0  starting...
+ 604642    
+ /localscratch/jepa.44504438.0/tipmip_pel_c_pit/604642                          
+  
+ Read Parameters...
+ Running Taxon G_galeus            
+ ~/projects/def-wailung/Data/Species/Distributions/S604642.csv                  
+                                          
+  4.918875365329533E-007
+ Thread           0  starting...
+ 690023    
+ /localscratch/jepa.44504438.0/tipmip_pel_c_pit/690023                          
+  
+ Read Parameters...
+ Running Taxon I_argentinus        
+ ~/projects/def-wailung/Data/Species/Distributions/S690023.csv                  
+                                          
+  5.607607999822406E-007
+ Thread           0  starting...
+ 600505    
+ /localscratch/jepa.44504438.0/tipmip_pel_c_pit/600505                          
+  
+ Read Parameters...
+ Running Taxon S_mentella          
+ ~/projects/def-wailung/Data/Species/Distributions/S600505.csv                  
+                                          
+  2.412534419038436E-007
+ Thread           0  starting...
+ 600334    
+ /localscratch/jepa.44504438.0/tipmip_pel_c_pit/600334                          
+  
+ Read Parameters...
+ Running Taxon H_atlanticus        
+ ~/projects/def-wailung/Data/Species/Distributions/S600334.csv                  
+                                          
+  4.481618944165434E-007
+ Thread           0  starting...
+ Time step =         1813
+ Catch=   10576004.6803718     
+ Abd=   7360780.    
+ Catch=   7116567.09348873     
+ Abd=  1.0182764E+07
+ Catch=   13340556.6593292     
+ Abd=  1.8950166E+07
+ Catch=   13082226.7761425     
+ Abd=  1.2681970E+08
+ Catch=   11994692.0768766     
+ Abd=  1.0198537E+08
+ Catch=   15301173.3860077     
+ Abd=  1.9697274E+08
+ Catch=   27624852.0137294     
+ Abd=  7.5353624E+07
+ Catch=   71240606.1591658     
+ Abd=  5.8902323E+08
+ Catch=   1762619.22854704     
+ Abd=  2.0986846E+07
+ Catch=   196939.010842187     
+ Abd=   1946768.    
+ Catch=   13953550.3167139     
+ Abd=   9638277.    
+ Catch=   3193404.08070956     
+ Abd=  2.3273312E+07
+ Catch=   1599362.57935280     
+ Abd=  1.9303466E+07
+ Time step =         1814
+ Catch=   6246233.54275696     
+ Abd=   5999604.    
+ Catch=   3656945.93476612     
+ Abd=   7163866.    
+ Catch=   7882809.69929330     
+ Abd=  1.4360465E+07
+ Catch=   8039604.45190550     
+ Abd=  8.7921344E+07
+ Catch=   9050516.40789041     
+ Abd=  8.2240408E+07
+ Catch=   13466008.7584743     
+ Abd=  1.7587472E+08
+ Catch=   17422400.7488743     
+ Abd=  5.6639864E+07
+ Catch=   49276035.0024410     
+ Abd=  4.5653331E+08
+ Catch=   1371183.14666757     
+ Abd=  1.7216608E+07
+ Catch=   140877.090462914     
+ Abd=   1511123.    
+ Catch=   9225023.90404679     
+ Abd=   8285427.    
+ Catch=   2212156.05117119     
+ Abd=  1.7777064E+07
+ Catch=   995777.944977675     
+ Abd=  1.4595264E+07
+ Time step =         1815
+ Catch=   5527349.79297908     
+ Abd=   5614676.    
+ Catch=   2844473.47673585     
+ Abd=   6025104.    
+ Catch=   6470182.80459623     
+ Abd=  1.2534579E+07
+ Catch=   5893400.30681994     
+ Abd=  6.7756544E+07
+ Catch=   7541857.83942417     
+ Abd=  7.0493584E+07
+ Catch=   12148323.9202345     
+ Abd=  1.6017192E+08
+ Catch=   13987354.6980169     
+ Abd=  4.7974800E+07
+ Catch=   39985349.9569492     
+ Abd=  3.8473946E+08
+ Catch=   1157782.95036513     
+ Abd=  1.4904314E+07
+ Catch=   113663.693253132     
+ Abd=   1260634.    
+ Catch=   8464411.96107083     
+ Abd=   7933444.    
+ Catch=   1765073.08693748     
+ Abd=  1.4718787E+07
+ Catch=   795951.175287946     
+ Abd=  1.2191355E+07
+ Time step =         1816
+ Catch=   5301971.38928722     
+ Abd=   5481124.    
+ Catch=   2491663.29843767     
+ Abd=   5456506.    
+ Catch=   5837740.18160859     
+ Abd=  1.1618481E+07
+ Catch=   4690723.48816058     
+ Abd=  5.5585784E+07
+ Catch=   6587806.72187256     
+ Abd=  6.2637068E+07
+ Catch=   11145563.8183605     
+ Abd=  1.4796693E+08
+ Catch=   12224240.3332067     
+ Abd=  4.3067428E+07
+ Catch=   34482175.6647463     
+ Abd=  3.3855712E+08
+ Catch=   1019254.02279346     
+ Abd=  1.3320902E+07
+ Catch=   96909.6581633875     
+ Abd=   1096143.    
+ Catch=   8249395.47870247     
+ Abd=   7825488.    
+ Catch=   1495322.32319798     
+ Abd=  1.2725881E+07
+ Catch=   681747.814930464     
+ Abd=  1.0671292E+07
+ Time step =         1817
+ Catch=   5221049.46056940     
+ Abd=   5431460.    
+ Catch=   2303607.95657555     
+ Abd=   5133239.    
+ Catch=   5503229.43459902     
+ Abd=  1.1108036E+07
+ Catch=   3933421.68351073     
+ Abd=  4.7583308E+07
+ Catch=   5928213.81659534     
+ Abd=  5.7026276E+07
+ Catch=   10354240.7367451     
+ Abd=  1.3819155E+08
+ Catch=   11173429.7635064     
+ Abd=  3.9993028E+07
+ Catch=   30774221.4166799     
+ Abd=  3.0603494E+08
+ Catch=   921214.806103411     
+ Abd=  1.2164014E+07
+ Catch=   85474.1802490764     
+ Abd=   979550.1    
+ Catch=   8181823.54423890     
+ Abd=   7790708.    
+ Catch=   1311301.87303010     
+ Abd=  1.1304464E+07
+ Catch=   605588.403274807     
+ Abd=   9605086.    
+ Time step =         1818
+ Catch=   5190524.93122044     
+ Abd=   5412432.    
+ Catch=   2192787.77148881     
+ Abd=   4935766.    
+ Catch=   5311453.10584731     
+ Abd=  1.0806870E+07
+ Catch=   3420697.69830272     
+ Abd=  4.2004348E+07
+ Catch=   5446159.21554538     
+ Abd=  5.2828992E+07
+ Catch=   9713154.19747947     
+ Abd=  1.3018227E+08
+ Catch=   10495034.4283799     
+ Abd=  3.7948584E+07
+ Catch=   28087151.8389354     
+ Abd=  2.8179706E+08
+ Catch=   847989.273148678     
+ Abd=  1.1281142E+07
+ Catch=   77157.9228791705     
+ Abd=   892623.4    
+ Catch=   8159870.89279192     
+ Abd=   7779308.    
+ Catch=   1176122.57922842     
+ Abd=  1.0230301E+07

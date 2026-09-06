@@ -1,0 +1,10 @@
+Extracting environmental data
+Environmental data extracted
+Current working directory is /project/6006523/jepa/tipping_points/scripts/run_dbem
+Starting run at:Sun 14 Jun 2026 02:01:33 PM PDT
+“Starting task: 10”
+Program ADRDisp finished with exit code 108 at: Sun 14 Jun 2026 02:01:33 PM PDT
+Compressing DBEM outputs
+Compressed as __10_netcdf.tar.gz
+Creating netCDF
+Finished!
