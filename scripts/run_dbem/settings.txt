@@ -3,7 +3,7 @@
  rsfile RunSppList
  rpath fishmip2300_ipsl_126
  tpath TaxonDataC0
- SppListRoot ~/projects/def-wailung/Data/Species/TaxonList/tipping_point/
+ SppListRoot ~/projects/def-wailung/Data/Species/TaxonList/
  FHS    1.00
  FEEZ    1.00
  MPApath no_mpa
