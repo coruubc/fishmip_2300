@@ -1,4 +1,4 @@
- CCSc IPSL2300
+ CCSc C6GFDL26
  sSSP SSP126
  rsfile RunSppList
  rpath fishmip2300_ipsl_126
