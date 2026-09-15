@@ -155,24 +155,24 @@ lapply(variables, function(var) {
 
 ```{r}
 
-source("functions/merge_early_late_nc_fx.R")
+source("/functions/merge_early_late_nc_fx.R")
 source("functions/variable_mapping_fx.R")
 
 
 path_early <- list.files(
   "/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/historical/yearly/",
   pattern = ".nc", full.names = TRUE
-)
+)[1:2]
 
 path_late <- list.files(
   "/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/ssp126/yearly/",
   pattern = "_2015_2100.nc", full.names = TRUE
-)
+)[1:2]
 
 path_future <- list.files(
   "/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/ssp126/yearly/",
   pattern = "_2101_2300.nc", full.names = TRUE
-)
+)[1:2]
 
 # --- Match by variable name ---
 early_basenames <- basename(path_early)
@@ -205,11 +205,12 @@ for (i in 3:13){
 }
 
 merge_early_late_nc(
-  path_early = path_early[4],
-  path_late = path_late[4],
-  path_future = path_future[4],
+  path_early = path_early[7],
+  path_late = path_late[7],
+  path_future = path_future[7],
   out_dir
 )
+
 ```
 
 ## Test joint
@@ -289,9 +290,9 @@ lapply(path_list, test_plot)
 # Calculates totalphy2 based on available phytoplankton size classes from different ESMs
 
 # Read diatom production data
-diat_nc <- nc_open("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined/ipsl-cm6a-lr_r1i1p1f1_intppdiat_yearly_1850_2300_05x05.nc")
+diat_nc <- nc_open("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined/intppdiat_IPSL2300_y.nc")
 
-npp_nc <- nc_open("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined/ipsl-cm6a-lr_r1i1p1f1_intpp_yearly_1850_2300_05x05.nc")
+npp_nc <- nc_open("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined/intpp_IPSL2300_y.nc")
 
 diat <- ncvar_get(diat_nc, "intppdiat")
 npp  <- ncvar_get(npp_nc,  "intpp")
@@ -317,11 +318,24 @@ phy_var <- ncvar_def(
   units = "mmol N m-2 d-1",
   dim = list(lon_dim, lat_dim, year_dim),
   missval = missval,
-  longname = "Total phytoplankton production from diat and diaz"
+  longname = "Total phytoplankton production from diat and diaz",
+  prec = "double"
 )
 
-out_file <- "/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined/ipsl-cm6a-lr_r1i1p1f1_totalphy2_yearly_1850_2300_05x05.nc"
-nc_out <- nc_create(out_file, phy_var)
+# --- Define output variables ---
+  var_time <- ncvar_def(
+    name = "time_var",
+    units = "year",
+    dim = list(year_dim),
+    missval = NULL,
+    prec = "integer"
+  )
+
+
+out_file <- "/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/fishmip2300/totalphy2_IPSL2300_y.nc"
+# nc_out <- nc_create(out_file, phy_var)
+
+nc_out <- nc_create(out_file, list(var_time, phy_var))
 
 ncvar_put(nc_out, phy_var, totalphy2)
 
@@ -332,8 +346,19 @@ nc_close(nc_out)
 
 test_plot("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined/ipsl-cm6a-lr_r1i1p1f1_totalphy2_yearly_1850_2300_05x05.nc")
 
+
+
+
 ```
 
+```{r}
+nc_open("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/fishmip2300/Salinity_surf_IPSL2300_y.nc")
+
+nc_open("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/fishmip2300/SST_IPSL2300_y.nc")
+
+nc_open("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/fishmip2300/totalphy2_IPSL2300_y.nc")
+
+```
 
 
 # Old code 

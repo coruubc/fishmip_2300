@@ -17,11 +17,19 @@ get_output_varname <- function(path, nc_varname) {
     return("O2_btm")
   }
   
+  if (grepl("o2b", file_name, fixed = TRUE)) {
+    return("O2_btm")
+  }
+  
   if (grepl("o2-surf", file_name, fixed = TRUE)) {
     return("O2_surf")
   }
   
   if (grepl("so-bot", file_name, fixed = TRUE)) {
+    return("Salinity_btm")
+  }
+  
+  if (grepl("saltb", file_name, fixed = TRUE)) {
     return("Salinity_btm")
   }
   
@@ -33,6 +41,10 @@ get_output_varname <- function(path, nc_varname) {
     return("htotal_btm")
   }
   
+  if (grepl("pHb", file_name, fixed = TRUE)) {
+    return("htotal_btm")
+  }
+  
   if (grepl("ph-surf", file_name, fixed = TRUE)) {
     return("htotal_surf")
   }
@@ -40,10 +52,15 @@ get_output_varname <- function(path, nc_varname) {
   # Variables identifiable directly from NetCDF variable name
   var_map <- c(
     "uo"     = "AdvectionU",
+    # "ub"     = "AdvectionU",
     "vo"     = "AdvectionV",
+    # "vb"     = "AdvectionV",
     "tob"    = "bot_temp",
+    "tempb"    = "bot_temp",
     "tos"    = "SST",
-    "siconc" = "IceExt"
+    "siconc" = "IceExt",
+    "intpp" = "intpp",
+    "intppdiat" = "intppdiat"
   )
   
   if (nc_varname %in% names(var_map)) {
