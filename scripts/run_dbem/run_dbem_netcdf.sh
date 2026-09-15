@@ -3,11 +3,11 @@
 #SBATCH --account=def-wailung
 #SBATCH -N 1 	#Nodes
 #SBATCH -N 1	#CPU count
-#SBATCH --mem-per-cpu=900M
-#SBATCH -t 01-00:00:00
+#SBATCH --mem-per-cpu=1900M
+#SBATCH -t 00-00:10:00
 #SBATCH --mail-user=j.palacios@oceans.ubc.ca
 #SBATCH --mail-type=ALL
-#SBATCH --array=10-11
+#SBATCH --array=10-10
 #SBATCH --output=slurm_out/netcdfArray-%A-%a.out
 #SBATCH --error=slurm_out/netcdfArray-%A-%a.err
 
@@ -17,7 +17,7 @@ runName=$(awk '$1 == "rpath" {print $2}' settings.txt)
 SppListName=$(awk '$1 == "rsfile" {print $2}' settings.txt)
 
 # Extract environmental data ============================================
-Root=~/projects/def-wailung/Data/Climate/fishmip2300/${CCSc}
+Root=~/projects/def-wailung/Data/Climate/${CCSc}_annual/netcdfs/
 
 cd $SLURM_TMPDIR
 echo "Extracting environmental data"
@@ -63,7 +63,7 @@ mv ${CCSc}_${runName}_${SppListName}${SLURM_ARRAY_TASK_ID}_netcdf.tar.gz ~/scrat
 # Create netCDFs of output =========================================
 cd $SLURM_SUBMIT_DIR
 echo 'Creating netCDF'
-module load  StdEnv/2020  gcc/9.3.0  udunits/2.2.28  gdal/3.5.1  netcdf/4.7.4 r/4.2.2
+module load  StdEnv/2020  gcc/9.3.0  udunits/2.2.28  gdal/3.5.1  module load netcdf-fortran
 export R_LIBS=~/local/esm_process_libs/ ## TODO create the env for proper aggregation
 Rscript ../aggregate_dbem/dbem_out_netcdf.R
 echo 'Finished!'
