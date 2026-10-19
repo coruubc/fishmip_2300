@@ -100,7 +100,11 @@ monthly_to_yearly_nc <- function(
   
   lon_dim  <- ncdim_def("lon",  "degrees_east",  lon)
   lat_dim  <- ncdim_def("lat",  "degrees_north", lat)
-  year_dim <- ncdim_def("year", "year", uyears)
+  year_dim <- ncdim_def(
+    "time_dim", "time_steps",
+    vals = seq_along(uyears),
+    unlim = TRUE
+  )
   
   var_def <- ncvar_def(
     name = variable,
@@ -109,9 +113,18 @@ monthly_to_yearly_nc <- function(
     missval = -999,
     prec = "float"
   )
-  
-  nc_out <- nc_create(output_file, vars = list(var_def))
+
+  time_var <- ncvar_def(
+    name = "time_var",
+    units = "year",
+    dim = list(year_dim),
+    missval = NULL,
+    prec = "float"
+  )
+
+  nc_out <- nc_create(output_file, vars = list(var_def, time_var))
   ncvar_put(nc_out, var_def, yearly_means)
+  ncvar_put(nc_out, "time_var", uyears)
   nc_close(nc_out)
   
   message("Yearly surface NetCDF written:\n", output_file)
@@ -155,24 +168,24 @@ lapply(variables, function(var) {
 
 ```{r}
 
-source("/functions/merge_early_late_nc_fx.R")
-source("functions/variable_mapping_fx.R")
+source("../functions/merge_early_late_nc_fx.R")
+source("../functions/variable_mapping_fx.R")
 
 
 path_early <- list.files(
-  "/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/historical/yearly/",
+  "/Volumes/Enterprise/Data/FishMip/fishmip_2300/data/ipsl-cm6a-lr/historical/yearly/",
   pattern = ".nc", full.names = TRUE
-)[1:2]
+)
 
 path_late <- list.files(
-  "/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/ssp126/yearly/",
+  "/Volumes/Enterprise/Data/FishMip/fishmip_2300/data/ipsl-cm6a-lr/ssp126/yearly/",
   pattern = "_2015_2100.nc", full.names = TRUE
-)[1:2]
+)
 
 path_future <- list.files(
-  "/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/ssp126/yearly/",
+  "/Volumes/Enterprise/Data/FishMip/fishmip_2300/data/ipsl-cm6a-lr/ssp126/yearly/",
   pattern = "_2101_2300.nc", full.names = TRUE
-)[1:2]
+)
 
 # --- Match by variable name ---
 early_basenames <- basename(path_early)
@@ -199,17 +212,17 @@ if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
 
 
 # i = 1
-for (i in 3:13){
+for (i in 1:13){
   # for (i in 1:2) {
   merge_early_late_nc(path_early[i], path_late[i], path_future[i], out_dir)
 }
 
-merge_early_late_nc(
-  path_early = path_early[7],
-  path_late = path_late[7],
-  path_future = path_future[7],
-  out_dir
-)
+# merge_early_late_nc(
+#   path_early = path_early,
+#   path_late = path_late,
+#   path_future = path_future,
+#   out_dir
+# )
 
 ```
 
@@ -229,11 +242,13 @@ test_plot <-function(path_merged){
   
   pH   <- ncvar_get(nc, var_name)   # 720 x 360 x 300
   
-  if(var_name %in% c("uo","vo")){
-  time <- ncvar_get(nc, "time") # 300‑element vector  
-  }else(
-    time <- ncvar_get(nc, "time_dim") # 300‑element vector
-  )
+  time <- if ("time_var" %in% names(nc$var)) {
+    ncvar_get(nc, "time_var")
+  } else if ("time" %in% names(nc$var)) {
+    ncvar_get(nc, "time")
+  } else {
+    ncvar_get(nc, "time_dim")
+  }
   
   
   nc_close(nc)
@@ -270,20 +285,28 @@ test_plot <-function(path_merged){
   
   ggsave(
     last_plot(),
-    filename = paste0("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined_figures/", var_name, "_global_mean_trend.jpg"),
+    filename = paste0("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/fir_figures/", var_name, "_new_global_mean_trend.jpg"),
     width = 8, height = 5)
   
 }
+
+
+
+# path_list <- list.files(
+  # "/Volumes/Enterprise/Data/FishMip/fishmip_2300/data/ipsl-cm6a-lr/fishmip2300",
+  # pattern = ".nc",full.names = T)
 
 path_list <- list.files("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined",pattern = ".nc",full.names = T)
 
 
 # test_plot("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combinedb/O2_btm_IPSL2300_y.nc")
 
-lapply(path_list, test_plot)
+lapply(path_list[14], test_plot)
 ```
 
 # Transform totaplhy2 
+
+The time variable on the netcdf for totalphy2 was set as prec = "integer" and should be prec = "float"
 
 ```{r}
 
@@ -299,27 +322,30 @@ npp  <- ncvar_get(npp_nc,  "intpp")
 
 lon <- ncvar_get(diat_nc, "lon")
 lat <- ncvar_get(diat_nc, "lat")
-year <- ncvar_get(diat_nc, "time_dim")
+year <- ncvar_get(diat_nc, "time_var")
 
 nc_close(diat_nc)
 nc_close(npp_nc)
 
 diaz <- npp - diat
-totalphy2 <- diaz * 0.1 + diat
+totalphy2 <- (diaz * 0.1 + diat)+0.00000004
 totalphy2[totalphy2 < -9999] <- -9999  
 
 lon_dim <- ncdim_def("lon", "degrees_east", lon)
 lat_dim <- ncdim_def("lat", "degrees_north", lat)
-year_dim <- ncdim_def("time_dim", "year", year, unlim = FALSE)
+year_dim <- ncdim_def(
+  "time_dim", "time_steps",
+  vals = seq_along(year),
+  unlim = TRUE
+)
 
-missval <- -9999
 phy_var <- ncvar_def(
   name = "totalphy2",
   units = "mmol N m-2 d-1",
   dim = list(lon_dim, lat_dim, year_dim),
-  missval = missval,
+  missval = -9999,
   longname = "Total phytoplankton production from diat and diaz",
-  prec = "double"
+  prec = "float"
 )
 
 # --- Define output variables ---
@@ -328,26 +354,35 @@ phy_var <- ncvar_def(
     units = "year",
     dim = list(year_dim),
     missval = NULL,
-    prec = "integer"
+    prec = "float"
   )
 
 
-out_file <- "/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/fishmip2300/totalphy2_IPSL2300_y.nc"
+out_file <- "/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined/totalphy2_IPSL2300_y.nc"
 # nc_out <- nc_create(out_file, phy_var)
 
-nc_out <- nc_create(out_file, list(var_time, phy_var))
+nc_out <- nc_create(out_file, list(phy_var,var_time))
 
+# ncvar_put(nc_out, varid = "totalphy2",totalphy2)
 ncvar_put(nc_out, phy_var, totalphy2)
+# Write time values to the time_var variable
+ncvar_put(nc_out, varid = "time_var", year)
 
 ncatt_put(nc_out, 0, "source", "Derived from intppdiat and intpp")
 ncatt_put(nc_out, 0, "history", paste("Created", Sys.time()))
 
 nc_close(nc_out)
 
-test_plot("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined/ipsl-cm6a-lr_r1i1p1f1_totalphy2_yearly_1850_2300_05x05.nc")
+# test_plot("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined/ipsl-cm6a-lr_r1i1p1f1_totalphy2_yearly_1850_2300_05x05.nc")
+
+x <- nc_open("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/combined/totalphy2_IPSL2300_y.nc")
+
+y <- nc_open("/Volumes/Enterprise/Data/climate/cmip_6/c6gfdl26_annual/netcdfs/totalphy2_C6GFDL26_y.nc")
 
 
+ncvar_get(x, "time_dim")
 
+ncvar_get(y, "time_dim")
 
 ```
 
@@ -359,6 +394,118 @@ nc_open("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/fishmip2300/
 nc_open("/Volumes/Enterprise/Data/FishMip/fishmip_2300/ipsl-cm6a-lr/fishmip2300/totalphy2_IPSL2300_y.nc")
 
 ```
+
+
+# Scenarios comparrison
+
+```{r}
+
+variable = "totalphy2"
+
+comparrison_plot <- function(variable,layer){
+  
+  print(variable)
+  
+  paths <- c(
+    paste0("/Volumes/Enterprise/Data/FishMip/fishmip_2300/data/ipsl-cm6a-lr/fishmip2300/",variable,"_IPSL2300_y.nc"),
+    paste0("/Volumes/Enterprise/Data/climate/cmip_6/c6gfdl26_annual/netcdfs/",variable,"_C6GFDL26_y.nc"),
+    paste0("/Volumes/Enterprise/Data/tipping_points/data/climate/interpolated/Fir/pi_spinnup/btm/TIPMIP_COMBINED/",variable,"_TIPMIP_COMBINED_y.nc")
+  # paste0("/Volumes/Enterprise/Data/tipping_points/data/climate/interpolated/Fir/pi_spinnup/btm/TIPMIP_SOHOS/",variable,"_TIPMIP_SOHOS_y.nc")
+  )
+  
+  # h = 1
+  for(h in 1:length(paths)){
+    
+    nc <- nc_open(paths[h])
+    
+    
+    scenario <- str_sub(paths[h],str_count(paths[h])-13,str_count(paths[h])-4)
+    
+    
+    if(h == 2){
+      varname <- nc$var[[1]]$name
+      years <- seq(1850,2100,1)
+    }else{
+      varname <- nc$var[[2]]$name
+    }
+    
+    
+    var   <- ncvar_get(nc, varname)   # 720 x 360 x 300
+    time_var <- if ("time_var" %in% names(nc$var)) {
+      ncvar_get(nc, "time_var")
+    } else {
+      ncvar_get(nc, "time_dim")
+    }
+    lat <- ncvar_get(nc,"lat")
+    lon <- ncvar_get(nc, "lon")
+    
+    
+    # --- Compute global mean over space at each time ---
+  mean_var <- apply(var, 3, function(tt) mean(tt, na.rm = TRUE))  # time‑slice means
+  
+  # --- Make a data frame ---
+  df <- data.frame(
+    year = time_var,                 # assuming your "yyyy" is just numeric year
+    var_mean   = mean_var,
+    scenario = scenario
+  ) 
+    
+  
+  if(h == 2){
+    df <- df %>% 
+      mutate(year = years)
+  }
+  
+  # if(h == 4){
+  #   
+  #   df <- df %>% 
+  #     mutate(var_mean = var_mean+274.15)
+  # }
+    
+  
+  # --- Optional: remove missing values ---
+  # df <- df[!is.na(df$var_mean), ]
+  
+    if(h == 1){
+      final_df <- df
+    }else{
+      final_df <- bind_rows(final_df,df)
+    }
+    
+    
+  }
+  
+  
+  # --- Plot with trend line ---
+  ggplot(final_df, aes(x = year, y = var_mean,col = scenario)) +
+    geom_line(size = 0.8) +
+    theme_minimal() +
+    ggtitle(paste("Mean for",variable))
+  
+  ggsave(
+    last_plot(),
+    filename = paste0("/Users/jepa88/Library/CloudStorage/OneDrive-UBC/Data/FishMip/fishmip_2300/scen_comparrison/",varname,"_mean_trend_comparrison.jpg"),
+    width = 8, height = 5)
+  
+}
+
+
+variable_lists <- list.files("/Volumes/Enterprise/Data/FishMip/fishmip_2300/data/ipsl-cm6a-lr/fishmip2300")
+
+variable_lists <-  gsub("_IPSL2300_y.nc","",variable_lists)[1:11]
+
+
+# comparrison_plot("totalphy2","pel")
+
+lapply(variable_lists, comparrison_plot)
+
+
+dbem_spp <- my_data("dbem_species")
+
+
+```
+```
+
 
 
 # Old code 
@@ -385,7 +532,7 @@ merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
   lat <- ncvar_get(nc_early, "lat")
   
   # --- Identify main variable ---
-  exclude_vars <- c("lon", "lat", "time", "time_var", "olevel", "olevel_bnds", "bnds")
+  exclude_vars <- c("lon", "lat", "time", "time_var", "time_dim", "year", "olevel", "olevel_bnds", "bnds")
   candidate_vars <- setdiff(names(nc_early$var), exclude_vars)
   
   if (length(candidate_vars) == 0) {
@@ -402,6 +549,7 @@ merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
     dims <- sapply(nc$var[[varname]]$dim, function(x) x$name)
     
     if (identical(dims, c("lon", "lat", "time")) ||
+        identical(dims, c("lon", "lat", "time_dim")) ||
         identical(dims, c("longitude", "latitude", "time"))) {
       
       data <- ncvar_get(nc, varname)
@@ -409,6 +557,7 @@ merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
     }
     
     if (identical(dims, c("lon", "lat", "olevel", "time")) ||
+        identical(dims, c("lon", "lat", "olevel", "time_dim")) ||
         identical(dims, c("longitude", "latitude", "olevel", "time"))) {
       
       lon_n  <- nc$dim[[dims[1]]]$len
@@ -463,13 +612,16 @@ merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
   }
   
   # --- Time variable name for output ---
-  out_time_name <- "time"
+  out_time_name <- "time_var"
   
   # --- Time units and calendar from source if available ---
   time_units <- NA
   time_calendar <- NA
   
-  if ("time" %in% names(nc_early$dim)) {
+  if ("time_var" %in% names(nc_early$var)) {
+    time_units <- ncatt_get(nc_early, "time_var", "units")$value
+    time_calendar <- ncatt_get(nc_early, "time_var", "calendar")$value
+  } else if ("time" %in% names(nc_early$dim)) {
     time_units <- ncatt_get(nc_early, "time", "units")$value
     time_calendar <- ncatt_get(nc_early, "time", "calendar")$value
   } else if ("time_var" %in% names(nc_early$dim)) {
@@ -482,7 +634,12 @@ merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
   # --- Define dimensions ---
   dim_lon  <- ncdim_def("lon", "degrees_east", lon, create_dimvar = TRUE)
   dim_lat  <- ncdim_def("lat", "degrees_north", lat, create_dimvar = TRUE)
-  dim_time <- ncdim_def("time", time_units, time_full, unlim = TRUE, create_dimvar = TRUE)
+  dim_time <- ncdim_def(
+    "time_dim", "time_steps",
+    seq_along(time_full),
+    unlim = TRUE,
+    create_dimvar = TRUE
+  )
   
   # --- Define output variables ---
   fillvalue <- ncatt_get(nc_early, varname, "_FillValue")$value
@@ -496,7 +653,7 @@ merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
     var_units,
     list(dim_lon, dim_lat, dim_time),
     missval = fillvalue,
-    prec = "double"
+    prec = "float"
   )
   
   var_time <- ncvar_def(
@@ -504,7 +661,7 @@ merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
     time_units,
     list(dim_time),
     missval = NULL,
-    prec = "double"
+    prec = "float"
   )
   
   # --- Output name ---
@@ -536,7 +693,7 @@ merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
   
   # --- Copy time calendar if available ---
   if (!is.null(time_calendar) && !is.na(time_calendar)) {
-    ncatt_put(ncid, "time", "calendar", time_calendar)
+    ncatt_put(ncid, out_time_name, "calendar", time_calendar)
   }
   
   # --- Copy global attributes ---
@@ -580,7 +737,7 @@ merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
   
   # --- Identify main data variable ---
   exclude_vars <- c(
-    "lon", "lat", "time", "time_var", "year",
+    "lon", "lat", "time", "time_var", "time_dim", "year",
     "olevel", "olevel_bnds", "bnds"
   )
   
@@ -606,6 +763,10 @@ merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
     if ("year" %in% names(nc$dim)) {
       return(nc$dim[["year"]]$vals)
     }
+
+    if ("time_dim" %in% names(nc$dim)) {
+      return(nc$dim[["time_dim"]]$vals)
+    }
     
     stop(
       "No supported temporal coordinate found. Available dimensions: ",
@@ -620,9 +781,11 @@ merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
     
     # Variables already stored as lon x lat x time/year
     if (identical(dims, c("lon", "lat", "time")) ||
+        identical(dims, c("lon", "lat", "time_dim")) ||
         identical(dims, c("lon", "lat", "year")) ||
         identical(dims, c("lon", "lat", "time_var")) ||
         identical(dims, c("longitude", "latitude", "time")) ||
+        identical(dims, c("longitude", "latitude", "time_dim")) ||
         identical(dims, c("longitude", "latitude", "year")) ||
         identical(dims, c("longitude", "latitude", "time_var"))) {
       
@@ -631,9 +794,11 @@ merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
     
     # Variables stored as lon x lat x olevel x time/year
     if (identical(dims, c("lon", "lat", "olevel", "time")) ||
+        identical(dims, c("lon", "lat", "olevel", "time_dim")) ||
         identical(dims, c("lon", "lat", "olevel", "year")) ||
         identical(dims, c("lon", "lat", "olevel", "time_var")) ||
         identical(dims, c("longitude", "latitude", "olevel", "time")) ||
+        identical(dims, c("longitude", "latitude", "olevel", "time_dim")) ||
         identical(dims, c("longitude", "latitude", "olevel", "year")) ||
         identical(dims, c("longitude", "latitude", "olevel", "time_var"))) {
       
@@ -693,7 +858,9 @@ merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
   }
   
   # --- Retrieve temporal metadata ---
-  source_time_dim <- if ("time" %in% names(nc_early$dim)) {
+  source_time_dim <- if ("time_var" %in% names(nc_early$var)) {
+    "time_var"
+  } else if ("time" %in% names(nc_early$dim)) {
     "time"
   } else if ("time_var" %in% names(nc_early$dim)) {
     "time_var"
@@ -751,11 +918,19 @@ merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
   )
   
   dim_time <- ncdim_def(
-    name = "time",
-    units = time_units,
-    vals = time_full,
+    name = "time_dim",
+    units = "time_steps",
+    vals = seq_along(time_full),
     unlim = TRUE,
     create_dimvar = TRUE
+  )
+
+  var_time <- ncvar_def(
+    name = "time_var",
+    units = time_units,
+    dim = list(dim_time),
+    missval = NULL,
+    prec = "float"
   )
   
   # --- Define output data variable ---
@@ -764,7 +939,7 @@ merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
     units = var_units,
     dim = list(dim_lon, dim_lat, dim_time),
     missval = fillvalue,
-    prec = "double"
+    prec = "float"
   )
   
   # --- Construct output file name ---
@@ -787,10 +962,11 @@ merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
   path_merged <- file.path(out_dir, outname)
   
   # --- Create output NetCDF ---
-  ncid <- nc_create(path_merged, vars = list(var_data))
-  
+  ncid <- nc_create(path_merged, vars = list(var_data, var_time))
+
   # Dimension coordinate variables are automatically created by ncdim_def().
   ncvar_put(ncid, varname, data_full)
+  ncvar_put(ncid, "time_var", time_full)
   
   # --- Copy data-variable attributes ---
   var_atts <- ncatt_get(nc_early, varname)
@@ -803,7 +979,7 @@ merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
   
   # --- Add calendar attribute when supplied ---
   if (!is.na(time_calendar)) {
-    ncatt_put(ncid, "time", "calendar", time_calendar)
+    ncatt_put(ncid, "time_var", "calendar", time_calendar)
   }
   
   # --- Copy global attributes ---
@@ -822,4 +998,3 @@ merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
 }
 
 ```
-

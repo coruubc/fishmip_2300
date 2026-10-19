@@ -102,8 +102,8 @@ merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
   
   dim_time <- ncdim_def(
     name = "time_dim",
-    units = "year",
-    vals = time_full,
+    units = "time_steps",
+    vals = seq_along(time_full),
     unlim = TRUE,
     create_dimvar = TRUE
   )
@@ -114,7 +114,7 @@ merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
     units = "year",
     dim = list(dim_time),
     missval = NULL,
-    prec = "integer"
+    prec = "float"
   )
   
   # The important part: output_varname is used here
@@ -124,7 +124,7 @@ merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
     dim = list(dim_lon, dim_lat, dim_time),
     missval = -9999,
     longname = output_varname,
-    prec = "double"
+    prec = "float"
   )
   
   # --- Construct requested output filename ---
@@ -132,12 +132,13 @@ merge_early_late_nc <- function(path_early, path_late, path_future, out_dir) {
   path_merged <- file.path(out_dir, outname)
   
   # --- Create output NetCDF file ---
-  nc_out <- nc_create(path_merged, list(var_time, var_data))
+  nc_out <- nc_create(path_merged, list(var_data,var_time))
   # on.exit(nc_close(nc_out), add = TRUE)
   
   # --- Write data ---
-  ncvar_put(nc_out, "time_var", time_full)
   ncvar_put(nc_out, output_varname, data_full)
+  ncvar_put(nc_out, "time_var", time_full)
+  
   
   # --- Copy global attributes ---
   global_attributes <- ncatt_get(nc_early, 0)
