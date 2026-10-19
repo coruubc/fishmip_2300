@@ -1,7 +1,7 @@
- CCSc C6GFDL26
+ CCSc IPSL2300
  sSSP SSP126
  rsfile RunSppList
- rpath fishmip2300_ipsl_126
+ rpath fmip3_ipsl126
  tpath TaxonDataC0
  SppListRoot ~/projects/def-wailung/Data/Species/TaxonList/
  FHS    1.00
